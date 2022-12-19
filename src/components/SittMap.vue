@@ -42,6 +42,14 @@
 							<span>[day: {{ agent.day }}, hour: {{ Math.round(agent.hour * 100) / 100 }}]</span>
 						</button>
 					</div>
+
+					{{ agentPositions }}
+				</div>
+			</LControl>
+
+			<LControl position="bottomleft">
+				<div class="bg-white bg-opacity-80 p-2" style="width: 50vw" :style="{ 'min-width': maxTime + 'px' }">
+					<Slider v-model="slider" :max="maxTime" :lazy="false" :format="formatSliderTooltip" />
 				</div>
 			</LControl>
 
@@ -82,6 +90,10 @@
 					</LPopup>
 				</LCircleMarker>
 			</LLayerGroup>
+
+			<LLayerGroup>
+				<LMarker v-for="agent in agentPositions" :key="agent.uid" :lat-lng="agent.latLng" />
+			</LLayerGroup>
 		</LMap>
 	</div>
 </template>
@@ -91,10 +103,20 @@
  * Show the map
  */
 import L from "leaflet";
-import { LCircleMarker, LControl, LLayerGroup, LMap, LPolyline, LPopup, LTileLayer } from "@vue-leaflet/vue-leaflet";
+import {
+	LCircleMarker,
+	LControl,
+	LLayerGroup,
+	LMap,
+	LMarker,
+	LPolyline,
+	LPopup,
+	LTileLayer,
+} from "@vue-leaflet/vue-leaflet";
 import { computed, ref } from "vue";
 import PopupPath from "@/components/PopupPath.vue";
 import PopupHub from "@/components/PopupHub.vue";
+import Slider from "@vueform/slider";
 
 // props
 const props = defineProps({
@@ -109,6 +131,7 @@ const zoom = ref(4);
 const map = ref();
 const hoverId = ref(null);
 const selectedAgentUid = ref(null);
+const slider = ref(0);
 
 // computed data
 const paths = computed(() =>
@@ -141,6 +164,45 @@ const selectedAgent = computed(() => {
 	return filtered.length > 0 ? filtered[0] : {};
 });
 const selectedAgentUids = computed(() => selectedAgent.value?.uids || []);
+const maxTime = computed(() =>
+	// calculate maximum time of all agents
+	Math.ceil(
+		agents.value.reduce((prevValue, agent) => {
+			const myValue = (agent.day - 1) * 24 + agent.hour;
+			return myValue > prevValue ? myValue : prevValue;
+		}, 0)
+	)
+);
+// calculate all the agent positions dynamically:
+const agentPositions = computed(() => {
+	// define day and hour to find
+	const find = valueToDayHour(slider.value);
+
+	// iterate all the paths and agents to find possible candidates
+	const agentList = [];
+	const agentIds = {}; // for doubles
+
+	for (const path of paths.value) {
+		for (const agentUid of path.agentUids) {
+			if (agentIds[agentUid]) continue; // no double entries
+
+			const agent = path.agents[agentUid];
+			if (agent.day === find.day && agent.start <= find.hour && agent.end >= find.hour) {
+				let legTime = agent.start;
+				let i = 0;
+				while (Math.floor(legTime) < find.hour && i < (agent.leg_times?.length || -1)) {
+					legTime += agent.leg_times[0];
+					i++;
+				}
+
+				agentIds[agentUid] = true; // TODO
+				agentList.push({ uid: agentUid, latLng: path.latLngs[i] });
+			}
+		}
+	}
+
+	return agentList;
+});
 
 // events
 const onMapReady = (readyMap) => {
@@ -185,8 +247,15 @@ const getPathLineColor = (path) => {
 
 	return "#3388ff";
 };
+const formatSliderTooltip = (value) => {
+	const v = valueToDayHour(value);
+	return "day: " + v.day + ", hour: " + v.hour;
+};
+
+const valueToDayHour = (value) => ({ day: Math.floor(value / 24) + 1, hour: Math.round(value % 24) });
 </script>
 
 <style>
 @import "leaflet/dist/leaflet.css";
+@import "@vueform/slider/themes/default.css";
 </style>
