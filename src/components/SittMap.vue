@@ -19,6 +19,32 @@
 				attribution="&copy; <a target='_blank' href='http://osm.org/copyright'>OpenStreetMap</a> contributors"
 			></LTileLayer>
 
+			<LControl position="topright">
+				<div class="bg-white bg-opacity-80 p-2">
+					<div class="font-bold text-slate-400">Agents</div>
+					<div v-for="agent in agents" :key="agent.uid">
+						<button
+							class="block px-6 py-2 mt-2 text-base leading-tight rounded shadow-md hover:shadow-lg transition duration-150 ease-in-out"
+							:class="
+								selectedAgentUid == agent.uid
+									? 'bg-fuchsia-400 hover:bg-fuchsia-600 hover:text-white'
+									: 'bg-fuchsia-200 hover:bg-fuchsia-400'
+							"
+							@click="onAgentButtonClicked(agent)"
+						>
+							<FontAwesomeIcon
+								v-if="agent.status === 'finished'"
+								icon="fa-solid fa-check"
+								class="text-green-700"
+							/>
+							<FontAwesomeIcon v-else icon="fa-solid fa-ban" class="text-red-500" />
+							{{ agent.uid }}
+							<span>[day: {{ agent.day }}, hour: {{ Math.round(agent.hour * 100) / 100 }}]</span>
+						</button>
+					</div>
+				</div>
+			</LControl>
+
 			<LLayerGroup>
 				<LPolyline
 					v-for="path in paths"
@@ -27,7 +53,7 @@
 					:name="path.id"
 					:title="path.id"
 					:weight="hoverId === path.id ? 5 : 3"
-					:color="hoverId === path.id ? '#8b0000' : '#3388ff'"
+					:color="getPathLineColor(path)"
 					@mouseover="onHubMouseOver(path.id)"
 					@mouseout="onHubMouseOut(path.id)"
 				>
@@ -65,7 +91,7 @@
  * Show the map
  */
 import L from "leaflet";
-import { LCircleMarker, LLayerGroup, LMap, LPolyline, LPopup, LTileLayer } from "@vue-leaflet/vue-leaflet";
+import { LCircleMarker, LControl, LLayerGroup, LMap, LPolyline, LPopup, LTileLayer } from "@vue-leaflet/vue-leaflet";
 import { computed, ref } from "vue";
 import PopupPath from "@/components/PopupPath.vue";
 import PopupHub from "@/components/PopupHub.vue";
@@ -82,6 +108,7 @@ const props = defineProps({
 const zoom = ref(4);
 const map = ref();
 const hoverId = ref(null);
+const selectedAgentUid = ref(null);
 
 // computed data
 const paths = computed(() =>
@@ -93,6 +120,11 @@ const paths = computed(() =>
 		latLngs: path.geom.coordinates.map((coord) => [coord[1], coord[0]]), // leaflet lat/lng switch
 		heights: path.geom.coordinates.map((coord) => coord[2]),
 		agents: (props.data?.legs[path.id] && props.data.legs[path.id]?.agents) || [],
+		agentUids:
+			(props.data?.legs[path.id] &&
+				props.data.legs[path.id]?.agents &&
+				Object.keys(props.data.legs[path.id].agents)) ||
+			[],
 	}))
 );
 const hubs = computed(() =>
@@ -103,6 +135,12 @@ const hubs = computed(() =>
 		height: node.geom.coordinates[2],
 	}))
 );
+const agents = computed(() => [...props.data.agents_finished, ...props.data.agents_cancelled]);
+const selectedAgent = computed(() => {
+	const filtered = selectedAgentUid.value ? agents.value.filter((a) => a.uid === selectedAgentUid.value) : [];
+	return filtered.length > 0 ? filtered[0] : {};
+});
+const selectedAgentUids = computed(() => selectedAgent.value?.uids || []);
 
 // events
 const onMapReady = (readyMap) => {
@@ -110,8 +148,6 @@ const onMapReady = (readyMap) => {
 	map.value = readyMap;
 
 	const bounds = L.latLngBounds();
-
-	console.log(props.data.legs);
 
 	for (const node of props.data.nodes) {
 		bounds.extend(L.latLng([node.geom.coordinates[1], node.geom.coordinates[0]]));
@@ -128,6 +164,26 @@ const onHubMouseOver = (id) => {
 // eslint-disable-next-line no-unused-vars
 const onHubMouseOut = (id) => {
 	hoverId.value = "";
+};
+
+const onAgentButtonClicked = (agent) => {
+	// clicking again will disable selection
+	selectedAgentUid.value = selectedAgentUid.value === agent.uid ? null : agent.uid;
+};
+
+// methods
+const getPathLineColor = (path) => {
+	if (hoverId.value === path.id) return "#8b0000";
+
+	if (
+		selectedAgentUids.value.length &&
+		path.agentUids.length &&
+		selectedAgentUids.value.some((e) => path.agentUids.includes(e))
+	) {
+		return "#f00";
+	}
+
+	return "#3388ff";
 };
 </script>
 

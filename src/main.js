@@ -4,9 +4,9 @@ import App from "./App.vue";
 // Font Awesome
 import { library } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import { faArrowUpFromBracket, faBed } from "@fortawesome/free-solid-svg-icons";
+import { faArrowUpFromBracket, faBed, faBan, faCheck } from "@fortawesome/free-solid-svg-icons";
 
-library.add(faArrowUpFromBracket, faBed);
+library.add(faArrowUpFromBracket, faBed, faBan, faCheck);
 
 import "./assets/styles.css";
 
