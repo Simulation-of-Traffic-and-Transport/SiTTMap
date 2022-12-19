@@ -2,15 +2,15 @@
 	<div class="font-bold mb-2">{{ path.id }}</div>
 	<div>{{ path.from }} &ndash; {{ path.to }}</div>
 	<div>Length: {{ Math.round(path.length_m) }}m</div>
-	<table class="w-full">
-		<tr>
+	<table class="w-full mt-2">
+		<tr class="text-slate-400">
 			<th>Agent</th>
 			<th class="text-center pr-1">Day</th>
 			<th class="text-right pr-1">Start</th>
 			<th class="text-right pr-1">End</th>
 		</tr>
 		<tr v-for="agent in agents" :key="agent.id">
-			<td class="font-bold">{{ agent.id }}</td>
+			<td class="italic">{{ agent.id }}</td>
 			<td class="text-center pr-1">{{ agent.day }}</td>
 			<td class="text-right pr-1">{{ Math.round(agent.start * 100) / 100 }}</td>
 			<td class="text-right pr-1">{{ Math.round(agent.end * 100) / 100 }}</td>
