@@ -32,9 +32,7 @@
 					@mouseout="onHubMouseOut(path.id)"
 				>
 					<LPopup>
-						<div class="font-bold mb-2">{{ path.id }}</div>
-						<div>{{ path.from }} &ndash; {{ path.to }}</div>
-						<div>Length: {{ Math.round(path.length_m) }}m</div>
+						<PopupPath :path="path" />
 					</LPopup>
 				</LPolyline>
 			</LLayerGroup>
@@ -54,10 +52,7 @@
 					@mouseout="onHubMouseOut(hub.id)"
 				>
 					<LPopup>
-						<div class="font-bold mb-2">{{ hub.id }}</div>
-						<div>
-							<FontAwesomeIcon v-if="hub.overnight" icon="fa-solid fa-bed" size="lg" title="Overnight" />
-						</div>
+						<PopupHub :hub="hub" />
 					</LPopup>
 				</LCircleMarker>
 			</LLayerGroup>
@@ -72,6 +67,8 @@
 import L from "leaflet";
 import { LCircleMarker, LLayerGroup, LMap, LPolyline, LPopup, LTileLayer } from "@vue-leaflet/vue-leaflet";
 import { computed, ref } from "vue";
+import PopupPath from "@/components/PopupPath.vue";
+import PopupHub from "@/components/PopupHub.vue";
 
 // props
 const props = defineProps({
@@ -95,6 +92,7 @@ const paths = computed(() =>
 		length_m: path.length_m,
 		latLngs: path.geom.coordinates.map((coord) => [coord[1], coord[0]]), // leaflet lat/lng switch
 		heights: path.geom.coordinates.map((coord) => coord[2]),
+		agents: (props.data?.legs[path.id] && props.data.legs[path.id]?.agents) || [],
 	}))
 );
 const hubs = computed(() =>
@@ -112,6 +110,8 @@ const onMapReady = (readyMap) => {
 	map.value = readyMap;
 
 	const bounds = L.latLngBounds();
+
+	console.log(props.data.legs);
 
 	for (const node of props.data.nodes) {
 		bounds.extend(L.latLng([node.geom.coordinates[1], node.geom.coordinates[0]]));
