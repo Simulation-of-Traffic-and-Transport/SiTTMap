@@ -49,7 +49,13 @@
 
 			<LControl position="bottomleft">
 				<div class="bg-white bg-opacity-80 p-2" style="width: 50vw" :style="{ 'min-width': maxTime + 'px' }">
-					<Slider v-model="slider" :max="maxTime" :lazy="false" :format="formatSliderTooltip" />
+					<Slider
+						v-model="slider"
+						:min="minTime"
+						:max="maxTime"
+						:lazy="false"
+						:format="formatSliderTooltip"
+					/>
 				</div>
 			</LControl>
 
@@ -65,7 +71,7 @@
 					@mouseover="onHubMouseOver(path.id)"
 					@mouseout="onHubMouseOut(path.id)"
 				>
-					<LPopup>
+					<LPopup :options="{ maxWidth: 600 }">
 						<PopupPath :path="path" />
 					</LPopup>
 				</LPolyline>
@@ -85,7 +91,7 @@
 					@mouseover="onHubMouseOver(hub.id)"
 					@mouseout="onHubMouseOut(hub.id)"
 				>
-					<LPopup>
+					<LPopup :options="{ maxWidth: 600 }">
 						<PopupHub :hub="hub" />
 					</LPopup>
 				</LCircleMarker>
@@ -113,7 +119,7 @@ import {
 	LPopup,
 	LTileLayer,
 } from "@vue-leaflet/vue-leaflet";
-import { computed, ref } from "vue";
+import { computed, onBeforeMount, ref } from "vue";
 import PopupPath from "@/components/PopupPath.vue";
 import PopupHub from "@/components/PopupHub.vue";
 import Slider from "@vueform/slider";
@@ -126,14 +132,19 @@ const props = defineProps({
 	},
 });
 
-// data
-const zoom = ref(4);
-const map = ref();
-const hoverId = ref(null);
-const selectedAgentUid = ref(null);
-const slider = ref(0);
-
 // computed data
+const agentsPerPath = computed(() => {
+	const agentsPerPath = {};
+
+	for (const id in props.data.agents) {
+		for (const pathData of props.data.agents[id]) {
+			if (!agentsPerPath[pathData.path]) agentsPerPath[pathData.path] = {};
+			agentsPerPath[pathData.path][id] = { id, ...pathData };
+		}
+	}
+
+	return agentsPerPath;
+});
 const paths = computed(() =>
 	props.data.paths.map((path) => ({
 		id: path.id,
@@ -142,20 +153,33 @@ const paths = computed(() =>
 		length_m: path.length_m,
 		latLngs: path.geom.coordinates.map((coord) => [coord[1], coord[0]]), // leaflet lat/lng switch
 		heights: path.geom.coordinates.map((coord) => coord[2]),
-		agents: (props.data?.legs[path.id] && props.data.legs[path.id]?.agents) || [],
-		agentUids:
-			(props.data?.legs[path.id] &&
-				props.data.legs[path.id]?.agents &&
-				Object.keys(props.data.legs[path.id].agents)) ||
-			[],
+		agentUids: Object.keys(agentsPerPath.value[path.id]) || [],
+		agents: agentsPerPath.value[path.id] || {},
 	}))
 );
+const agentsPerHub = computed(() => {
+	const agentsPerHub = {};
+
+	for (const id in props.data.agents) {
+		for (const pathData of props.data.agents[id]) {
+			if (!agentsPerHub[pathData.from]) agentsPerHub[pathData.from] = {};
+			if (!agentsPerHub[pathData.to]) agentsPerHub[pathData.to] = {};
+			if (!agentsPerHub[pathData.from][id]) agentsPerHub[pathData.from][id] = {};
+			if (!agentsPerHub[pathData.to][id]) agentsPerHub[pathData.to][id] = {};
+
+			agentsPerHub[pathData.from][id].leave = { day: pathData.day, hour: pathData.start, path: pathData.path };
+			agentsPerHub[pathData.to][id].arrive = { day: pathData.day, hour: pathData.end, path: pathData.path };
+		}
+	}
+	return agentsPerHub;
+});
 const hubs = computed(() =>
 	props.data.nodes.map((node) => ({
 		id: node.id,
 		overnight: node.overnight,
 		latLng: [node.geom.coordinates[1], node.geom.coordinates[0]], // leaflet lat/lng switch
 		height: node.geom.coordinates[2],
+		agents: agentsPerHub.value[node.id] || {},
 	}))
 );
 const agents = computed(() => [...props.data.agents_finished, ...props.data.agents_cancelled]);
@@ -164,6 +188,17 @@ const selectedAgent = computed(() => {
 	return filtered.length > 0 ? filtered[0] : {};
 });
 const selectedAgentUids = computed(() => selectedAgent.value?.uids || []);
+const minTime = computed(() => {
+	let minTime = Number.MAX_SAFE_INTEGER;
+	for (const id in props.data.agents) {
+		const t = props.data.agents[id].reduce((prevValue, agent) => {
+			const myValue = (agent.day - 1) * 24 + agent.start;
+			return myValue < prevValue ? myValue : prevValue;
+		}, Number.MAX_SAFE_INTEGER);
+		if (t < minTime) minTime = t;
+	}
+	return minTime;
+});
 const maxTime = computed(() =>
 	// calculate maximum time of all agents
 	Math.ceil(
@@ -182,41 +217,51 @@ const agentPositions = computed(() => {
 	const agentList = [];
 	const agentIds = {}; // for doubles
 
-	for (const path of paths.value) {
-		for (const agentUid of path.agentUids) {
-			if (agentIds[agentUid]) continue; // no double entries
-
-			const agent = path.agents[agentUid];
-			if (agent.day === find.day && agent.start <= find.hour && agent.end >= find.hour) {
-				let legTime = agent.start;
-				let i = 0;
-				while (Math.floor(legTime) < find.hour && i < (agent.leg_times?.length || -1)) {
-					legTime += agent.leg_times[0];
-					i++;
-				}
-
-				agentIds[agentUid] = true; // TODO
-				agentList.push({ uid: agentUid, latLng: path.latLngs[i] });
-			}
-		}
-	}
+	// for (const path of paths.value) {
+	// 	for (const agentUid of path.agentUids) {
+	// 		if (agentIds[agentUid]) continue; // no double entries
+	//
+	// 		const agent = path.agents[agentUid];
+	// 		if (agent.day === find.day && agent.start <= find.hour && agent.end >= find.hour) {
+	// 			let legTime = agent.start;
+	// 			let i = 0;
+	// 			while (Math.floor(legTime) < find.hour && i < (agent.leg_times?.length || -1)) {
+	// 				legTime += agent.leg_times[0];
+	// 				i++;
+	// 			}
+	//
+	// 			agentIds[agentUid] = true; // TODO
+	// 			agentList.push({ uid: agentUid, latLng: path.latLngs[i] });
+	// 		}
+	// 	}
+	// }
 
 	return agentList;
 });
 
-// events
-const onMapReady = (readyMap) => {
-	// map to ref variable
-	map.value = readyMap;
+// data
+const zoom = ref(4);
+const map = ref();
+const hoverId = ref(null);
+const selectedAgentUid = ref(null);
+const slider = ref(minTime.value);
+const bounds = ref(null);
 
-	const bounds = L.latLngBounds();
+// events
+onBeforeMount(() => {
+	// calculate bounds
+	bounds.value = L.latLngBounds();
 
 	for (const node of props.data.nodes) {
-		bounds.extend(L.latLng([node.geom.coordinates[1], node.geom.coordinates[0]]));
+		bounds.value.extend(L.latLng([node.geom.coordinates[1], node.geom.coordinates[0]]));
 	}
 	// TODO: might make sense to add the data of the paths, too
+});
+const onMapReady = (readyMap) => {
+	readyMap.fitBounds(bounds.value, { animate: false, padding: [10, 10], maxZoom: 16 });
 
-	readyMap.fitBounds(bounds, { padding: [10, 10] });
+	// map to ref variable
+	map.value = readyMap;
 };
 
 const onHubMouseOver = (id) => {
