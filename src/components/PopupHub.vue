@@ -24,9 +24,9 @@
 		</tr>
 		<tr v-for="id in departures" :key="id">
 			<td>{{ id }}</td>
-			<td class="text-center pr-1">{{ hub.agents[id].leave.day }}</td>
-			<td class="text-right pr-1">{{ Math.round(hub.agents[id].leave.hour * 100) / 100 }}</td>
-			<td class="whitespace-nowrap">{{ hub.agents[id].leave.path }}</td>
+			<td class="text-center pr-1">{{ hub.agents[id].depart.day }}</td>
+			<td class="text-right pr-1">{{ Math.round(hub.agents[id].depart.hour * 100) / 100 }}</td>
+			<td class="whitespace-nowrap">{{ hub.agents[id].depart.path }}</td>
 		</tr>
 	</table>
 </template>
@@ -43,5 +43,5 @@ const props = defineProps({
 
 const agentIds = computed(() => Object.keys(props.hub.agents) || []);
 const arrivals = computed(() => agentIds.value.filter((id) => props.hub.agents[id]?.arrive));
-const departures = computed(() => agentIds.value.filter((id) => props.hub.agents[id]?.leave));
+const departures = computed(() => agentIds.value.filter((id) => props.hub.agents[id]?.depart));
 </script>

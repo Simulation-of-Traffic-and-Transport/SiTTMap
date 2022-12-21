@@ -42,13 +42,15 @@
 							<span>[day: {{ agent.day }}, hour: {{ Math.round(agent.hour * 100) / 100 }}]</span>
 						</button>
 					</div>
-
-					{{ agentPositions }}
 				</div>
 			</LControl>
 
 			<LControl position="bottomleft">
-				<div class="bg-white bg-opacity-80 p-2" style="width: 50vw" :style="{ 'min-width': maxTime + 'px' }">
+				<div
+					class="bg-white bg-opacity-80 p-2 ml-10"
+					style="width: 50vw"
+					:style="{ 'min-width': maxTime + 'px' }"
+				>
 					<Slider
 						v-model="slider"
 						:min="minTime"
@@ -123,6 +125,11 @@ import { computed, onBeforeMount, ref } from "vue";
 import PopupPath from "@/components/PopupPath.vue";
 import PopupHub from "@/components/PopupHub.vue";
 import Slider from "@vueform/slider";
+import IntervalTree from "@flatten-js/interval-tree";
+
+// helper functions
+const valueToDayHour = (value) => ({ day: Math.floor(value / 24) + 1, hour: Math.round(value % 24) });
+const dayHourToValue = (day, hour) => (day - 1) * 24 + hour;
 
 // props
 const props = defineProps({
@@ -133,18 +140,41 @@ const props = defineProps({
 });
 
 // computed data
+/**
+ * This is the interval tree to hold the time intervals of all entries in hour history. This is handy to find all
+ * entries for certain intervals efficiently.
+ */
+const intervalTree = computed(() => {
+	let tree = new IntervalTree();
+
+	for (const entry of props.data.history) {
+		const begin = entry.begin ? dayHourToValue(entry.begin.day, entry.begin.hour) : -1;
+		const end = entry.end ? dayHourToValue(entry.end.day, entry.end.hour) : -1;
+
+		tree.insert([begin, end], entry);
+	}
+
+	return tree;
+});
+/**
+ * This keeps all agents per path entry (path is the key)
+ */
 const agentsPerPath = computed(() => {
 	const agentsPerPath = {};
 
-	for (const id in props.data.agents) {
-		for (const pathData of props.data.agents[id]) {
-			if (!agentsPerPath[pathData.path]) agentsPerPath[pathData.path] = {};
-			agentsPerPath[pathData.path][id] = { id, ...pathData };
-		}
+	for (const entry of props.data.history.filter((entry) => entry.type === "edge")) {
+		const pathId = entry.path;
+		const uid = entry.agent;
+
+		if (!agentsPerPath[pathId]) agentsPerPath[pathId] = {};
+		agentsPerPath[pathId][uid] = entry;
 	}
 
 	return agentsPerPath;
 });
+/**
+ * Corrected data of paths
+ */
 const paths = computed(() =>
 	props.data.paths.map((path) => ({
 		id: path.id,
@@ -153,12 +183,16 @@ const paths = computed(() =>
 		length_m: path.length_m,
 		latLngs: path.geom.coordinates.map((coord) => [coord[1], coord[0]]), // leaflet lat/lng switch
 		heights: path.geom.coordinates.map((coord) => coord[2]),
-		agentUids: Object.keys(agentsPerPath.value[path.id]) || [],
+		agentUids: (agentsPerPath.value[path.id] && Object.keys(agentsPerPath.value[path.id])) || [],
 		agents: agentsPerPath.value[path.id] || {},
 	}))
 );
+/**
+ * This keeps all agents per hub (hubId is the key)
+ */
 const agentsPerHub = computed(() => {
 	const agentsPerHub = {};
+	// TODO
 
 	for (const id in props.data.agents) {
 		for (const pathData of props.data.agents[id]) {
@@ -167,55 +201,111 @@ const agentsPerHub = computed(() => {
 			if (!agentsPerHub[pathData.from][id]) agentsPerHub[pathData.from][id] = {};
 			if (!agentsPerHub[pathData.to][id]) agentsPerHub[pathData.to][id] = {};
 
-			agentsPerHub[pathData.from][id].leave = { day: pathData.day, hour: pathData.start, path: pathData.path };
+			agentsPerHub[pathData.from][id].depart = { day: pathData.day, hour: pathData.start, path: pathData.path };
 			agentsPerHub[pathData.to][id].arrive = { day: pathData.day, hour: pathData.end, path: pathData.path };
 		}
 	}
 	return agentsPerHub;
 });
+/**
+ * List of all hubs with corrected data
+ */
 const hubs = computed(() =>
-	props.data.nodes.map((node) => ({
-		id: node.id,
-		overnight: node.overnight,
-		latLng: [node.geom.coordinates[1], node.geom.coordinates[0]], // leaflet lat/lng switch
-		height: node.geom.coordinates[2],
-		agents: agentsPerHub.value[node.id] || {},
+	props.data.nodes.map((hub) => ({
+		id: hub.id,
+		overnight: hub.overnight,
+		latLng: [hub.geom.coordinates[1], hub.geom.coordinates[0]], // leaflet lat/lng switch
+		height: hub.geom.coordinates[2],
+		agents: agentsPerHub.value[hub.id] || {},
 	}))
 );
+/**
+ * All known agents
+ */
 const agents = computed(() => [...props.data.agents_finished, ...props.data.agents_cancelled]);
+/**
+ * Currently selected agent (selected in Agent list top right)
+ */
 const selectedAgent = computed(() => {
 	const filtered = selectedAgentUid.value ? agents.value.filter((a) => a.uid === selectedAgentUid.value) : [];
 	return filtered.length > 0 ? filtered[0] : {};
 });
+/**
+ * UIDs of agents in the selected agent list
+ */
 const selectedAgentUids = computed(() => selectedAgent.value?.uids || []);
-const minTime = computed(() => {
-	let minTime = Number.MAX_SAFE_INTEGER;
-	for (const id in props.data.agents) {
-		const t = props.data.agents[id].reduce((prevValue, agent) => {
-			const myValue = (agent.day - 1) * 24 + agent.start;
-			return myValue < prevValue ? myValue : prevValue;
-		}, Number.MAX_SAFE_INTEGER);
-		if (t < minTime) minTime = t;
-	}
-	return minTime;
-});
-const maxTime = computed(() =>
-	// calculate maximum time of all agents
-	Math.ceil(
-		agents.value.reduce((prevValue, agent) => {
-			const myValue = (agent.day - 1) * 24 + agent.hour;
-			return myValue > prevValue ? myValue : prevValue;
-		}, 0)
-	)
+/**
+ * minimum time in slider
+ */
+const minTime = computed(
+	() => Math.floor((intervalTree.value.keys && intervalTree.value.keys[0] && intervalTree.value.keys[0][0]) || 0)
+	// we use the key list of the tree - this is handy, because we know it is correctly sorted
 );
-// calculate all the agent positions dynamically:
+/**
+ * maximum time in slider
+ */
+const maxTime = computed(
+	() => Math.ceil((intervalTree.value.keys && intervalTree.value.keys[intervalTree.value.keys.length - 1][1]) || 0)
+	// we use the key list of the tree - this is handy, because we know it is correctly sorted
+);
+/**
+ * agent positions at current slider setting
+ */
 const agentPositions = computed(() => {
-	// define day and hour to find
-	const find = valueToDayHour(slider.value);
-
 	// iterate all the paths and agents to find possible candidates
 	const agentList = [];
-	const agentIds = {}; // for doubles
+
+	for (const entry of intervalTree.value.search([slider.value, slider.value])) {
+		if (entry.type === "hub") {
+			const hub = hubs.value.find((hub) => hub.id === entry.hub);
+			agentList.push({ agent: entry.agent, latLng: hub.latLng });
+		} else {
+			//console.log(entry);
+			let legTime = dayHourToValue(entry.begin.day, entry.begin.hour);
+			let i = 0;
+
+			while (Math.floor(legTime) < slider.value && i < (entry.leg_times?.length || -1)) {
+				legTime += entry.leg_times[i];
+				i++;
+			}
+
+			const path = paths.value.find((path) => path.id === entry.path);
+			// check the direction of the indexes
+			console.log(path.from, "->", path.to);
+			if (path.from !== entry.from) {
+				agentList.push({ uid: entry.agent, latLng: path.latLngs[path.latLngs.length - i - 1] });
+			} else {
+				agentList.push({ uid: entry.agent, latLng: path.latLngs[i] });
+			}
+		}
+	}
+
+	// we will add hubs first
+	// for (const hub of hubs.value) {
+	// 	let min = Number.MAX_SAFE_INTEGER;
+	// 	let max = -1;
+	//
+	// 	for (const id in hub.agents) {
+	// 		const agent = hub.agents[id];
+	// 		if (hub.agents[id].depart) {
+	// 			const hour = dayHourToValue(agent.depart.day, agent.depart.hour);
+	// 			if (hour > max) max = hour;
+	// 		}
+	// 		if (agent.arrive) {
+	// 			const hour = dayHourToValue(agent.arrive.day, agent.arrive.hour);
+	// 			if (hour < min) min = hour;
+	// 		}
+	// 	}
+	// 	// start and stop places?
+	// 	if (min === Number.MAX_SAFE_INTEGER) min = 0;
+	// 	if (max === -1) max = Number.MAX_SAFE_INTEGER;
+	//
+	// 	if (min <= slider.value && max >= slider.value) {
+	// 		agentList.push({ uid: hub.id, latLng: hub.latLng });
+	// 		agentIds.push(...Object.keys(hub.agents)); // add agents, so we do not have double entries below
+	// 		// TODO: das funktioniert so nicht...
+	// 	}
+	// }
 
 	// for (const path of paths.value) {
 	// 	for (const agentUid of path.agentUids) {
@@ -296,8 +386,6 @@ const formatSliderTooltip = (value) => {
 	const v = valueToDayHour(value);
 	return "day: " + v.day + ", hour: " + v.hour;
 };
-
-const valueToDayHour = (value) => ({ day: Math.floor(value / 24) + 1, hour: Math.round(value % 24) });
 </script>
 
 <style>

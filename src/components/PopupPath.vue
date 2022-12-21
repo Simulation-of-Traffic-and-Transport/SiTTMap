@@ -10,10 +10,12 @@
 			<th class="text-right">End</th>
 		</tr>
 		<tr v-for="agent in path.agents" :key="agent.id">
-			<td class="italic">{{ agent.id }}</td>
-			<td class="text-center pr-1">{{ agent.day }}</td>
-			<td class="text-right pr-1">{{ Math.round(agent.start * 100) / 100 }}</td>
-			<td class="text-right">{{ Math.round(agent.end * 100) / 100 }}</td>
+			<td class="italic">{{ agent.agent }}</td>
+			<td class="text-center pr-1">
+				{{ agent.begin.day !== agent.end.day ? agent.begin.day + "–" + agent.end.day : agent.begin.day }}
+			</td>
+			<td class="text-right pr-1">{{ Math.round(agent.begin.hour * 100) / 100 }}</td>
+			<td class="text-right">{{ Math.round(agent.end.hour * 100) / 100 }}</td>
 		</tr>
 	</table>
 </template>
