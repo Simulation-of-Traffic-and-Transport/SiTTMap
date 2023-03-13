@@ -13,8 +13,8 @@
 		<tr v-for="id in arrivals" :key="id">
 			<td>{{ id }}</td>
 			<td class="text-center pr-1">{{ hub.agents[id].arrive.day }}</td>
-			<td class="text-right pr-1">{{ Math.round(hub.agents[id].arrive.hour * 100) / 100 }}</td>
-			<td class="whitespace-nowrap">{{ hub.agents[id].arrive.path }}</td>
+			<td class="text-right pr-1">{{ Math.round(hub.agents[id].arrive.time * 100) / 100 }}</td>
+			<td class="whitespace-nowrap">{{ hub.agents[id].arrive.time }}</td>
 		</tr>
 		<tr class="text-slate-400">
 			<th class="pt-2">Departure</th>
@@ -25,7 +25,7 @@
 		<tr v-for="id in departures" :key="id">
 			<td>{{ id }}</td>
 			<td class="text-center pr-1">{{ hub.agents[id].depart.day }}</td>
-			<td class="text-right pr-1">{{ Math.round(hub.agents[id].depart.hour * 100) / 100 }}</td>
+			<td class="text-right pr-1">{{ Math.round(hub.agents[id].depart.time * 100) / 100 }}</td>
 			<td class="whitespace-nowrap">{{ hub.agents[id].depart.path }}</td>
 		</tr>
 	</table>
