@@ -39,7 +39,7 @@
 							/>
 							<FontAwesomeIcon v-else icon="fa-solid fa-ban" class="text-red-500" />
 							{{ agent.uid }}
-							<span>[day: {{ agent.day }}, hour: {{ Math.round(agent.time * 100) / 100 }}]</span>
+							<span>[day: {{ agent.day }}, hour: {{ Math.round(agent.hour * 100) / 100 }}]</span>
 						</button>
 					</div>
 				</div>
@@ -148,10 +148,10 @@ const intervalTree = computed(() => {
 	let tree = new IntervalTree();
 
 	for (const entry of props.data.history) {
-		const begin = entry.begin ? dayHourToValue(entry.begin.day, entry.begin.time) : -1;
+		const start = entry.start ? dayHourToValue(entry.start.day, entry.start.time) : -1;
 		const end = entry.end ? dayHourToValue(entry.end.day, entry.end.time) : -1;
 
-		tree.insert([begin, end], entry);
+		tree.insert([start, end], entry);
 	}
 
 	return tree;
@@ -261,7 +261,7 @@ const agentPositions = computed(() => {
 			agentList.push({ agent: entry.agent, latLng: hub.latLng });
 		} else {
 			//console.log(entry);
-			let legTime = dayHourToValue(entry.begin.day, entry.begin.time);
+			let legTime = dayHourToValue(entry.start.day, entry.start.time);
 			let i = 0;
 
 			while (Math.floor(legTime) < slider.value && i < (entry.leg_times?.length || -1)) {
@@ -384,7 +384,7 @@ const getPathLineColor = (path) => {
 };
 const formatSliderTooltip = (value) => {
 	const v = valueToDayHour(value);
-	return "day: " + v.day + ", hour: " + v.time;
+	return "day: " + v.day + ", hour: " + v.hour;
 };
 </script>
 

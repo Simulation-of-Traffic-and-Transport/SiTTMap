@@ -12,9 +12,9 @@
 		<tr v-for="agent in path.agents" :key="agent.id">
 			<td class="italic">{{ agent.agent }}</td>
 			<td class="text-center pr-1">
-				{{ agent.begin.day !== agent.end.day ? agent.begin.day + "–" + agent.end.day : agent.begin.day }}
+				{{ agent.start.day !== agent.end.day ? agent.start.day + "–" + agent.end.day : agent.start.day }}
 			</td>
-			<td class="text-right pr-1">{{ Math.round(agent.begin.time * 100) / 100 }}</td>
+			<td class="text-right pr-1">{{ Math.round(agent.start.time * 100) / 100 }}</td>
 			<td class="text-right">{{ Math.round(agent.end.time * 100) / 100 }}</td>
 		</tr>
 	</table>
