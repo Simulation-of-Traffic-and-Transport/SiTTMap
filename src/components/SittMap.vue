@@ -100,7 +100,11 @@
 			</LLayerGroup>
 
 			<LLayerGroup>
-				<LMarker v-for="agent in agentPositions" :key="agent.uid" :lat-lng="agent.latLng" />
+				<LMarker v-for="positionData in agentPositions" :key="positionData.id" :lat-lng="positionData.latLng">
+					<LPopup :options="{ maxWidth: 600, minWidth: 200 }">
+						<PopupPositionData :data="positionData" />
+					</LPopup>
+				</LMarker>
 			</LLayerGroup>
 		</LMap>
 	</div>
@@ -124,6 +128,7 @@ import {
 import { computed, onBeforeMount, ref } from "vue";
 import PopupPath from "@/components/PopupPath.vue";
 import PopupHub from "@/components/PopupHub.vue";
+import PopupPositionData from "@/components/PopupPositionData.vue";
 import Slider from "@vueform/slider";
 import IntervalTree from "@flatten-js/interval-tree";
 
@@ -151,7 +156,9 @@ const intervalTree = computed(() => {
 		const start = entry.start ? dayHourToValue(entry.start.day, entry.start.time) : -1;
 		const end = entry.end ? dayHourToValue(entry.end.day, entry.end.time) : -1;
 
-		tree.insert([start, end], entry);
+		if (start > -1 && end > -1) {
+			tree.insert([start, end], entry);
+		}
 	}
 
 	return tree;
@@ -253,30 +260,34 @@ const maxTime = computed(
  */
 const agentPositions = computed(() => {
 	// iterate all the paths and agents to find possible candidates
-	const agentList = [];
+	const agentList = {};
 
 	for (const entry of intervalTree.value.search([slider.value, slider.value])) {
 		if (entry.type === "hub") {
-			const hub = hubs.value.find((hub) => hub.id === entry.hub);
-			agentList.push({ agent: entry.agent, latLng: hub.latLng });
+			if (!agentList[entry.hub]) {
+				const hub = hubs.value.find((hub) => hub.id === entry.hub);
+
+				agentList[entry.hub] = { id: hub.id, latLng: hub.latLng, type: "hub", hub, agents: [] };
+			}
+			agentList[entry.hub].agents.push(entry);
 		} else {
 			//console.log(entry);
-			let legTime = dayHourToValue(entry.start.day, entry.start.time);
-			let i = 0;
-
-			while (Math.floor(legTime) < slider.value && i < (entry.leg_times?.length || -1)) {
-				legTime += entry.leg_times[i];
-				i++;
-			}
-
-			const path = paths.value.find((path) => path.id === entry.path);
-			// check the direction of the indexes
-			console.log(path.from, "->", path.to);
-			if (path.from !== entry.from) {
-				agentList.push({ uid: entry.agent, latLng: path.latLngs[path.latLngs.length - i - 1] });
-			} else {
-				agentList.push({ uid: entry.agent, latLng: path.latLngs[i] });
-			}
+			// let legTime = dayHourToValue(entry.start.day, entry.start.time);
+			// let i = 0;
+			//
+			// while (Math.floor(legTime) < slider.value && i < (entry.leg_times?.length || -1)) {
+			// 	legTime += entry.leg_times[i];
+			// 	i++;
+			// }
+			//
+			// const path = paths.value.find((path) => path.id === entry.path);
+			// // check the direction of the indexes
+			// console.log(path.from, "->", path.to);
+			// if (path.from !== entry.from) {
+			// 	agentList.push({ uid: entry.agent, latLng: path.latLngs[path.latLngs.length - i - 1] });
+			// } else {
+			// 	agentList.push({ uid: entry.agent, latLng: path.latLngs[i] });
+			// }
 		}
 	}
 
@@ -326,7 +337,7 @@ const agentPositions = computed(() => {
 	// 	}
 	// }
 
-	return agentList;
+	return Object.values(agentList);
 });
 
 // data

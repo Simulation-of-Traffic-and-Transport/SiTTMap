@@ -1,5 +1,5 @@
 <template>
-	<div class="font-bold mb-2">{{ hub.id }}</div>
+	<div class="font-bold mb-2"><FontAwesomeIcon icon="fa-solid fa-map-pin" size="lg" /> {{ hub.id }}</div>
 	<div>
 		<FontAwesomeIcon v-if="hub.overnight" icon="fa-solid fa-bed" size="lg" title="Overnight" />
 	</div>

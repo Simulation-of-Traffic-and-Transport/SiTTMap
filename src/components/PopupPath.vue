@@ -1,5 +1,5 @@
 <template>
-	<div class="font-bold mb-2">{{ path.id }}</div>
+	<div class="font-bold mb-2"><FontAwesomeIcon icon="fa-solid fa-road" size="lg" /> {{ path.id }}</div>
 	<div>{{ path.from }} &ndash; {{ path.to }}</div>
 	<div>Length: {{ Math.round(path.length_m) }}m</div>
 	<table class="w-full mt-2">
