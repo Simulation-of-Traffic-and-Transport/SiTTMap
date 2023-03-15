@@ -55,6 +55,7 @@
 						v-model="slider"
 						:min="minTime"
 						:max="maxTime"
+						:step="-1"
 						:lazy="false"
 						:format="formatSliderTooltip"
 					/>
@@ -133,7 +134,11 @@ import Slider from "@vueform/slider";
 import IntervalTree from "@flatten-js/interval-tree";
 
 // helper functions
-const valueToDayHour = (value) => ({ day: Math.floor(value / 24) + 1, hour: Math.round(value % 24) });
+const valueToDayHourMinute = (value) => ({
+	day: Math.floor(value / 24) + 1,
+	hour: Math.floor(value % 24),
+	minute: Math.round(((value % 24) % 1) * 60),
+});
 const dayHourToValue = (day, hour) => (day - 1) * 24 + hour;
 
 // props
@@ -153,11 +158,29 @@ const intervalTree = computed(() => {
 	let tree = new IntervalTree();
 
 	for (const entry of props.data.history) {
-		const start = entry.start ? dayHourToValue(entry.start.day, entry.start.time) : -1;
-		const end = entry.end ? dayHourToValue(entry.end.day, entry.end.time) : -1;
+		if (entry.agents) {
+			for (const uid in entry.agents) {
+				const agent = entry.agents[uid];
 
-		if (start > -1 && end > -1) {
-			tree.insert([start, end], entry);
+				const start = agent.start ? dayHourToValue(agent.start.day, agent.start.time) : -1;
+				const end = agent.end ? dayHourToValue(agent.end.day, agent.end.time) : -1;
+
+				if (start > -1 && end > -1) {
+					const data = {
+						id: entry.id,
+						type: entry.type,
+						agent: uid,
+						start: agent.start,
+						end: agent.end,
+					};
+					if (entry.type == "edge") {
+						data.from = entry.from;
+						data.to = entry.to;
+						data.leg_times = agent.leg_times;
+					}
+					tree.insert([start, end], data);
+				}
+			}
 		}
 	}
 
@@ -166,19 +189,15 @@ const intervalTree = computed(() => {
 /**
  * This keeps all agents per path entry (path is the key)
  */
-const agentsPerPath = computed(() => {
-	const agentsPerPath = {};
-
-	for (const entry of props.data.history.filter((entry) => entry.type === "edge")) {
-		const pathId = entry.path;
-		const uid = entry.agent;
-
-		if (!agentsPerPath[pathId]) agentsPerPath[pathId] = {};
-		agentsPerPath[pathId][uid] = entry;
-	}
-
-	return agentsPerPath;
-});
+const agentsPerPath = computed(() =>
+	Object.fromEntries(props.data.history.filter((entry) => entry.type === "edge").map((entry) => [entry.id, entry]))
+);
+/**
+ * This keeps all agents per hub (hubId is the key)
+ */
+const agentsPerHub = computed(() =>
+	Object.fromEntries(props.data.history.filter((entry) => entry.type === "node").map((entry) => [entry.id, entry]))
+);
 /**
  * Corrected data of paths
  */
@@ -190,30 +209,10 @@ const paths = computed(() =>
 		length_m: path.length_m,
 		latLngs: path.geom.coordinates.map((coord) => [coord[1], coord[0]]), // leaflet lat/lng switch
 		heights: path.geom.coordinates.map((coord) => coord[2]),
-		agentUids: (agentsPerPath.value[path.id] && Object.keys(agentsPerPath.value[path.id])) || [],
-		agents: agentsPerPath.value[path.id] || {},
+		uids: (agentsPerPath.value[path.id]?.agents && Object.keys(agentsPerPath.value[path.id].agents).sort()) || [],
+		agents: agentsPerPath.value[path.id]?.agents || {},
 	}))
 );
-/**
- * This keeps all agents per hub (hubId is the key)
- */
-const agentsPerHub = computed(() => {
-	const agentsPerHub = {};
-	// TODO
-
-	for (const id in props.data.agents) {
-		for (const pathData of props.data.agents[id]) {
-			if (!agentsPerHub[pathData.from]) agentsPerHub[pathData.from] = {};
-			if (!agentsPerHub[pathData.to]) agentsPerHub[pathData.to] = {};
-			if (!agentsPerHub[pathData.from][id]) agentsPerHub[pathData.from][id] = {};
-			if (!agentsPerHub[pathData.to][id]) agentsPerHub[pathData.to][id] = {};
-
-			agentsPerHub[pathData.from][id].depart = { day: pathData.day, hour: pathData.start, path: pathData.path };
-			agentsPerHub[pathData.to][id].arrive = { day: pathData.day, hour: pathData.end, path: pathData.path };
-		}
-	}
-	return agentsPerHub;
-});
 /**
  * List of all hubs with corrected data
  */
@@ -223,7 +222,8 @@ const hubs = computed(() =>
 		overnight: hub.overnight,
 		latLng: [hub.geom.coordinates[1], hub.geom.coordinates[0]], // leaflet lat/lng switch
 		height: hub.geom.coordinates[2],
-		agents: agentsPerHub.value[hub.id] || {},
+		uids: (agentsPerHub.value[hub.id]?.agents && Object.keys(agentsPerHub.value[hub.id].agents).sort()) || [],
+		agents: agentsPerHub.value[hub.id]?.agents || {},
 	}))
 );
 /**
@@ -263,31 +263,31 @@ const agentPositions = computed(() => {
 	const agentList = {};
 
 	for (const entry of intervalTree.value.search([slider.value, slider.value])) {
-		if (entry.type === "hub") {
-			if (!agentList[entry.hub]) {
-				const hub = hubs.value.find((hub) => hub.id === entry.hub);
-
-				agentList[entry.hub] = { id: hub.id, latLng: hub.latLng, type: "hub", hub, agents: [] };
-			}
-			agentList[entry.hub].agents.push(entry);
-		} else {
+		if (entry.type === "node") {
 			//console.log(entry);
-			// let legTime = dayHourToValue(entry.start.day, entry.start.time);
-			// let i = 0;
+			// if (!agentList[entry.hub]) {
+			// 	const hub = hubs.value.find((hub) => hub.id === entry.hub);
 			//
-			// while (Math.floor(legTime) < slider.value && i < (entry.leg_times?.length || -1)) {
-			// 	legTime += entry.leg_times[i];
-			// 	i++;
+			// 	agentList[entry.hub] = { id: hub.id, latLng: hub.latLng, type: "hub", hub, agents: [] };
 			// }
-			//
-			// const path = paths.value.find((path) => path.id === entry.path);
-			// // check the direction of the indexes
+			// agentList[entry.hub].agents.push(entry);
+		} else {
+			let legTime = dayHourToValue(entry.start.day, entry.start.time);
+			let i = 0;
+
+			while (Math.floor(legTime) < slider.value && i < (entry.leg_times?.length || -1)) {
+				legTime += entry.leg_times[i++];
+			}
+
+			const path = paths.value.find((path) => path.id === entry.id);
+
+			// check the direction of the indexes
 			// console.log(path.from, "->", path.to);
-			// if (path.from !== entry.from) {
-			// 	agentList.push({ uid: entry.agent, latLng: path.latLngs[path.latLngs.length - i - 1] });
-			// } else {
-			// 	agentList.push({ uid: entry.agent, latLng: path.latLngs[i] });
-			// }
+			if (path.from !== entry.from) {
+				agentList[entry.id] = { uid: entry.id, latLng: path.latLngs[path.latLngs.length - i - 1] };
+			} else {
+				agentList[entry.id] = { uid: entry.id, latLng: path.latLngs[i] };
+			}
 		}
 	}
 
@@ -319,7 +319,7 @@ const agentPositions = computed(() => {
 	// }
 
 	// for (const path of paths.value) {
-	// 	for (const agentUid of path.agentUids) {
+	// 	for (const agentUid of path.uids) {
 	// 		if (agentIds[agentUid]) continue; // no double entries
 	//
 	// 		const agent = path.agents[agentUid];
@@ -385,8 +385,8 @@ const getPathLineColor = (path) => {
 
 	if (
 		selectedAgentUids.value.length &&
-		path.agentUids.length &&
-		selectedAgentUids.value.some((e) => path.agentUids.includes(e))
+		path.uids.length &&
+		selectedAgentUids.value.some((e) => path.uids.includes(e))
 	) {
 		return "#f00";
 	}
@@ -394,8 +394,8 @@ const getPathLineColor = (path) => {
 	return "#3388ff";
 };
 const formatSliderTooltip = (value) => {
-	const v = valueToDayHour(value);
-	return "day: " + v.day + ", hour: " + v.hour;
+	const v = valueToDayHourMinute(value);
+	return "day: " + v.day + ", hour: " + ("" + v.hour).padStart(2, "0") + ":" + ("" + v.minute).padStart(2, "0");
 };
 </script>
 

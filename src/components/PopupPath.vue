@@ -2,25 +2,23 @@
 	<div class="font-bold mb-2"><FontAwesomeIcon icon="fa-solid fa-road" size="lg" /> {{ path.id }}</div>
 	<div>{{ path.from }} &ndash; {{ path.to }}</div>
 	<div>Length: {{ Math.round(path.length_m) }}m</div>
-	<table class="w-full mt-2">
+	<table v-if="path.uids?.length" class="w-full mt-2">
 		<tr class="text-slate-400">
 			<th>Agent</th>
-			<th class="text-center pr-1">Day</th>
-			<th class="text-right pr-1">Start</th>
-			<th class="text-right">End</th>
+			<th class="text-right pl-2">Start</th>
+			<th class="text-right pl-1">End</th>
 		</tr>
-		<tr v-for="agent in path.agents" :key="agent.id">
-			<td class="italic">{{ agent.agent }}</td>
-			<td class="text-center pr-1">
-				{{ agent.start.day !== agent.end.day ? agent.start.day + "–" + agent.end.day : agent.start.day }}
-			</td>
-			<td class="text-right pr-1">{{ Math.round(agent.start.time * 100) / 100 }}</td>
-			<td class="text-right">{{ Math.round(agent.end.time * 100) / 100 }}</td>
+		<tr v-for="uid in path.uids" :key="uid">
+			<td class="italic">{{ uid }}</td>
+			<td class="text-right pl-2"><DateTime :date-time="path.agents[uid].start" /></td>
+			<td class="text-right pl-1"><DateTime :date-time="path.agents[uid].end" /></td>
 		</tr>
 	</table>
 </template>
 
 <script setup>
+import DateTime from "@/components/DateTime.vue";
+
 defineProps({
 	path: {
 		type: Object,
