@@ -100,7 +100,7 @@
 				</LCircleMarker>
 			</LLayerGroup>
 
-			<LLayerGroup>
+			<LLayerGroup v-if="agentPositions?.length">
 				<LMarker v-for="positionData in agentPositions" :key="positionData.id" :lat-lng="positionData.latLng">
 					<LPopup :options="{ maxWidth: 600, minWidth: 200 }">
 						<PopupPositionData :data="positionData" />
@@ -260,84 +260,68 @@ const maxTime = computed(
  */
 const agentPositions = computed(() => {
 	// iterate all the paths and agents to find possible candidates
-	const agentList = {};
+	const positionList = {};
+	const agentsInHubs = new Set();
+	const edgeList = {}; // temporary keeper for edges
 
 	for (const entry of intervalTree.value.search([slider.value, slider.value])) {
 		if (entry.type === "node") {
-			//console.log(entry);
-			// if (!agentList[entry.hub]) {
-			// 	const hub = hubs.value.find((hub) => hub.id === entry.hub);
-			//
-			// 	agentList[entry.hub] = { id: hub.id, latLng: hub.latLng, type: "hub", hub, agents: [] };
-			// }
-			// agentList[entry.hub].agents.push(entry);
+			if (!(entry.id in positionList)) {
+				const hub = hubs.value.find((hub) => hub.id === entry.id);
+
+				if (hub) {
+					positionList[entry.id] = hub;
+					for (const uid of hub.uids) {
+						agentsInHubs.add(uid);
+					}
+				} else {
+					console.error("Path not found in hub list: " + entry.id, entry);
+				}
+			}
 		} else {
 			let legTime = dayHourToValue(entry.start.day, entry.start.time);
 			let i = 0;
 
-			while (Math.floor(legTime) < slider.value && i < (entry.leg_times?.length || -1)) {
+			while (legTime < slider.value && i < (entry.leg_times?.length || -1)) {
 				legTime += entry.leg_times[i++];
 			}
 
 			const path = paths.value.find((path) => path.id === entry.id);
 
-			// check the direction of the indexes
-			// console.log(path.from, "->", path.to);
-			if (path.from !== entry.from) {
-				agentList[entry.id] = { uid: entry.id, latLng: path.latLngs[path.latLngs.length - i - 1] };
+			if (path) {
+				// check the direction of the indexes
+				if (path.from !== entry.from) {
+					edgeList[entry.id] = {
+						uid: entry.id,
+						latLng: path.latLngs[path.latLngs.length - i - 1],
+						data: path,
+					};
+				} else {
+					edgeList[entry.id] = { uid: entry.id, latLng: path.latLngs[i], data: path };
+				}
 			} else {
-				agentList[entry.id] = { uid: entry.id, latLng: path.latLngs[i] };
+				console.error("Path not found in path list: " + entry.id, entry);
 			}
 		}
 	}
 
-	// we will add hubs first
-	// for (const hub of hubs.value) {
-	// 	let min = Number.MAX_SAFE_INTEGER;
-	// 	let max = -1;
-	//
-	// 	for (const id in hub.agents) {
-	// 		const agent = hub.agents[id];
-	// 		if (hub.agents[id].depart) {
-	// 			const hour = dayHourToValue(agent.depart.day, agent.depart.time);
-	// 			if (hour > max) max = hour;
-	// 		}
-	// 		if (agent.arrive) {
-	// 			const hour = dayHourToValue(agent.arrive.day, agent.arrive.time);
-	// 			if (hour < min) min = hour;
-	// 		}
-	// 	}
-	// 	// start and stop places?
-	// 	if (min === Number.MAX_SAFE_INTEGER) min = 0;
-	// 	if (max === -1) max = Number.MAX_SAFE_INTEGER;
-	//
-	// 	if (min <= slider.value && max >= slider.value) {
-	// 		agentList.push({ uid: hub.id, latLng: hub.latLng });
-	// 		agentIds.push(...Object.keys(hub.agents)); // add agents, so we do not have double entries below
-	// 		// TODO: das funktioniert so nicht...
-	// 	}
-	// }
+	// now add paths, if the agents have not been added yet - this prevents agents to show multiple times (once for
+	// hub, once for path start)
+	for (const uid in edgeList) {
+		const edge = edgeList[uid];
+		if (edge.data?.agents) {
+			const keys = Object.keys(edge.data.agents);
+			let matched = 0;
+			for (const key of keys) {
+				if (agentsInHubs.has(key)) matched++;
+			}
+			if (matched < keys.length) {
+				positionList[uid] = edge;
+			}
+		}
+	}
 
-	// for (const path of paths.value) {
-	// 	for (const agentUid of path.uids) {
-	// 		if (agentIds[agentUid]) continue; // no double entries
-	//
-	// 		const agent = path.agents[agentUid];
-	// 		if (agent.day === find.day && agent.start <= find.time && agent.end >= find.time) {
-	// 			let legTime = agent.start;
-	// 			let i = 0;
-	// 			while (Math.floor(legTime) < find.time && i < (agent.leg_times?.length || -1)) {
-	// 				legTime += agent.leg_times[0];
-	// 				i++;
-	// 			}
-	//
-	// 			agentIds[agentUid] = true; // TODO
-	// 			agentList.push({ uid: agentUid, latLng: path.latLngs[i] });
-	// 		}
-	// 	}
-	// }
-
-	return Object.values(agentList);
+	return Object.values(positionList);
 });
 
 // data
