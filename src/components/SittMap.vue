@@ -139,7 +139,7 @@ const valueToDayHourMinute = (value) => ({
 	hour: Math.floor(value % 24),
 	minute: Math.round(((value % 24) % 1) * 60),
 });
-const dayHourToValue = (day, hour) => (day - 1) * 24 + hour;
+const dayHourToValue = (v) => (v.day - 1) * 24 + v.time;
 
 // props
 const props = defineProps({
@@ -162,8 +162,8 @@ const intervalTree = computed(() => {
 			for (const uid in entry.agents) {
 				const agent = entry.agents[uid];
 
-				const start = agent.start ? dayHourToValue(agent.start.day, agent.start.time) : -1;
-				const end = agent.end ? dayHourToValue(agent.end.day, agent.end.time) : -1;
+				const start = agent.start ? dayHourToValue(agent.start) : -1;
+				const end = agent.end ? dayHourToValue(agent.end) : -1;
 
 				if (start > -1 && end > -1) {
 					const data = {
@@ -173,7 +173,7 @@ const intervalTree = computed(() => {
 						start: agent.start,
 						end: agent.end,
 					};
-					if (entry.type == "edge") {
+					if (entry.type === "edge") {
 						data.from = entry.from;
 						data.to = entry.to;
 						data.leg_times = agent.leg_times;
@@ -261,8 +261,6 @@ const maxTime = computed(
 const agentPositions = computed(() => {
 	// iterate all the paths and agents to find possible candidates
 	const positionList = {};
-	const agentsInHubs = new Set();
-	const edgeList = {}; // temporary keeper for edges
 
 	for (const entry of intervalTree.value.search([slider.value, slider.value])) {
 		if (entry.type === "node") {
@@ -270,16 +268,33 @@ const agentPositions = computed(() => {
 				const hub = hubs.value.find((hub) => hub.id === entry.id);
 
 				if (hub) {
-					positionList[entry.id] = hub;
+					const activeAgents = [];
+
+					// reduce agents to list to those that are active at this moment
 					for (const uid of hub.uids) {
-						agentsInHubs.add(uid);
+						if (
+							slider.value >= dayHourToValue(hub.agents[uid].start) &&
+							slider.value <= dayHourToValue(hub.agents[uid].end)
+						) {
+							activeAgents.push(uid);
+						}
 					}
+
+					positionList[entry.id] = {
+						id: entry.id,
+						type: "node",
+						label: entry.id,
+						latLng: hub.latLng,
+						overnight: hub.overnight,
+						uids: activeAgents,
+						agents: hub.agents,
+					};
 				} else {
 					console.error("Path not found in hub list: " + entry.id, entry);
 				}
 			}
 		} else {
-			let legTime = dayHourToValue(entry.start.day, entry.start.time);
+			let legTime = dayHourToValue(entry.start);
 			let i = 0;
 
 			while (legTime < slider.value && i < (entry.leg_times?.length || -1)) {
@@ -289,34 +304,29 @@ const agentPositions = computed(() => {
 			const path = paths.value.find((path) => path.id === entry.id);
 
 			if (path) {
-				// check the direction of the indexes
-				if (path.from !== entry.from) {
-					edgeList[entry.id] = {
-						uid: entry.id,
-						latLng: path.latLngs[path.latLngs.length - i - 1],
-						data: path,
-					};
-				} else {
-					edgeList[entry.id] = { uid: entry.id, latLng: path.latLngs[i], data: path };
+				const activeAgents = [];
+
+				// reduce agents to list to those that are active at this moment
+				for (const uid of path.uids) {
+					if (
+						slider.value >= dayHourToValue(path.agents[uid].start) &&
+						slider.value <= dayHourToValue(path.agents[uid].end)
+					) {
+						activeAgents.push(uid);
+					}
 				}
+
+				// check the direction of the indexes for some entries
+				positionList[entry.id] = {
+					id: entry.id,
+					type: "edge",
+					label: path.from !== entry.from ? path.to + " ↦ " + path.from : path.from + " ↦ " + path.to,
+					latLng: path.latLngs[path.from !== entry.from ? path.latLngs.length - i - 1 : i],
+					uids: activeAgents,
+					agents: path.agents,
+				};
 			} else {
 				console.error("Path not found in path list: " + entry.id, entry);
-			}
-		}
-	}
-
-	// now add paths, if the agents have not been added yet - this prevents agents to show multiple times (once for
-	// hub, once for path start)
-	for (const uid in edgeList) {
-		const edge = edgeList[uid];
-		if (edge.data?.agents) {
-			const keys = Object.keys(edge.data.agents);
-			let matched = 0;
-			for (const key of keys) {
-				if (agentsInHubs.has(key)) matched++;
-			}
-			if (matched < keys.length) {
-				positionList[uid] = edge;
 			}
 		}
 	}
