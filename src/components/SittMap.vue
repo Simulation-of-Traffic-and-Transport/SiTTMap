@@ -47,7 +47,7 @@
 
 			<LControl position="bottomleft">
 				<div
-					class="bg-white bg-opacity-80 p-2 ml-10"
+					class="bg-white bg-opacity-80 p-2 ml-10 flex flex-row items-center"
 					style="width: 50vw"
 					:style="{ 'min-width': maxTime + 'px' }"
 				>
@@ -58,7 +58,15 @@
 						:step="-1"
 						:lazy="false"
 						:format="formatSliderTooltip"
+						class="flex-grow m-1"
 					/>
+
+					<div
+						class="flex-shrink p-1 cursor-pointer hover:text-slate-500"
+						@click="sliderPlaying = !sliderPlaying"
+					>
+						<FontAwesomeIcon :icon="sliderPlaying ? 'fa-solid fa-stop' : 'fa-solid fa-play'" size="lg" />
+					</div>
 				</div>
 			</LControl>
 
@@ -126,7 +134,7 @@ import {
 	LPopup,
 	LTileLayer,
 } from "@vue-leaflet/vue-leaflet";
-import { computed, onBeforeMount, ref } from "vue";
+import { computed, onBeforeMount, ref, watch } from "vue";
 import PopupPath from "@/components/PopupPath.vue";
 import PopupHub from "@/components/PopupHub.vue";
 import PopupPositionData from "@/components/PopupPositionData.vue";
@@ -340,7 +348,30 @@ const map = ref();
 const hoverId = ref(null);
 const selectedAgentUid = ref(null);
 const slider = ref(minTime.value);
+const sliderPlaying = ref(false);
+const timerInterval = ref(null); // reference to timer
 const bounds = ref(null);
+
+// watcher for slider play
+watch(sliderPlaying, () => {
+	if (sliderPlaying.value) {
+		// turned on
+		timerInterval.value = setInterval(() => {
+			if (slider.value >= maxTime.value) {
+				// stop slider at end
+				if (timerInterval.value) clearInterval(timerInterval.value);
+				timerInterval.value = null;
+				sliderPlaying.value = false;
+			}
+			// increase slider value
+			slider.value += 0.01;
+		}, 5);
+	} else {
+		// turned off - delete interval
+		if (timerInterval.value) clearInterval(timerInterval.value);
+		timerInterval.value = null;
+	}
+});
 
 // events
 onBeforeMount(() => {

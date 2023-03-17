@@ -11,10 +11,12 @@ import {
 	faCheck,
 	faDolly,
 	faMapPin,
+	faPlay,
 	faRoad,
+	faStop,
 } from "@fortawesome/free-solid-svg-icons";
 
-library.add(faArrowUpFromBracket, faBed, faBan, faCheck, faDolly, faMapPin, faRoad);
+library.add(faArrowUpFromBracket, faBed, faBan, faCheck, faDolly, faMapPin, faPlay, faRoad, faStop);
 
 import "./assets/styles.css";
 
