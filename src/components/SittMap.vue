@@ -210,29 +210,34 @@ const agentsPerHub = computed(() =>
  * Corrected data of paths
  */
 const paths = computed(() =>
-	props.data.paths.map((path) => ({
-		id: path.id,
-		from: path.from,
-		to: path.to,
-		length_m: path.length_m,
-		latLngs: path.geom.coordinates.map((coord) => [coord[1], coord[0]]), // leaflet lat/lng switch
-		heights: path.geom.coordinates.map((coord) => coord[2]),
-		uids: (agentsPerPath.value[path.id]?.agents && Object.keys(agentsPerPath.value[path.id].agents).sort()) || [],
-		agents: agentsPerPath.value[path.id]?.agents || {},
-	}))
+	props.data.paths
+		.filter((path) => path?.geom?.coordinates?.length)
+		.map((path) => ({
+			id: path.id,
+			from: path.from,
+			to: path.to,
+			length_m: path.length_m,
+			latLngs: path.geom.coordinates.map((coord) => [coord[1], coord[0]]), // leaflet lat/lng switch
+			heights: path.geom.coordinates.map((coord) => coord[2]),
+			uids:
+				(agentsPerPath.value[path.id]?.agents && Object.keys(agentsPerPath.value[path.id].agents).sort()) || [],
+			agents: agentsPerPath.value[path.id]?.agents || {},
+		}))
 );
 /**
  * List of all hubs with corrected data
  */
 const hubs = computed(() =>
-	props.data.nodes.map((hub) => ({
-		id: hub.id,
-		overnight: hub.overnight,
-		latLng: [hub.geom.coordinates[1], hub.geom.coordinates[0]], // leaflet lat/lng switch
-		height: hub.geom.coordinates[2],
-		uids: (agentsPerHub.value[hub.id]?.agents && Object.keys(agentsPerHub.value[hub.id].agents).sort()) || [],
-		agents: agentsPerHub.value[hub.id]?.agents || {},
-	}))
+	props.data.nodes
+		.filter((hub) => hub?.geom?.coordinates?.length)
+		.map((hub) => ({
+			id: hub.id,
+			overnight: hub.overnight,
+			latLng: [hub.geom.coordinates[1], hub.geom.coordinates[0]], // leaflet lat/lng switch
+			height: hub.geom.coordinates[2],
+			uids: (agentsPerHub.value[hub.id]?.agents && Object.keys(agentsPerHub.value[hub.id].agents).sort()) || [],
+			agents: agentsPerHub.value[hub.id]?.agents || {},
+		}))
 );
 /**
  * All known agents
@@ -260,7 +265,13 @@ const minTime = computed(
  * maximum time in slider
  */
 const maxTime = computed(
-	() => Math.ceil((intervalTree.value.keys && intervalTree.value.keys[intervalTree.value.keys.length - 1][1]) || 0)
+	() =>
+		Math.ceil(
+			(intervalTree.value.keys &&
+				intervalTree.value.keys[0] &&
+				intervalTree.value.keys[intervalTree.value.keys.length - 1][1]) ||
+				0
+		)
 	// we use the key list of the tree - this is handy, because we know it is correctly sorted
 );
 /**
@@ -383,7 +394,9 @@ onBeforeMount(() => {
 	bounds.value = L.latLngBounds();
 
 	for (const node of props.data.nodes) {
-		bounds.value.extend(L.latLng([node.geom.coordinates[1], node.geom.coordinates[0]]));
+		if (node.geom?.coordinates?.length) {
+			bounds.value.extend(L.latLng([node.geom.coordinates[1], node.geom.coordinates[0]]));
+		}
 	}
 	// TODO: might make sense to add the data of the paths, too
 });
