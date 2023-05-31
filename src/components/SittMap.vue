@@ -341,7 +341,7 @@ const agentPositions = computed(() => {
 				// We add the lat/lng to edges, because there is the possibility to have multiple points on the
 				// same edge at the same time. This will allow for multiple pointers to appear here.
 				positionList[entry.id + "_" + latLng[0] + "_" + latLng[1]] = {
-					id: entry.id,
+					id: entry.id + latLng[0] + "_" + latLng[1],
 					type: "edge",
 					label: path.from !== entry.from ? path.to + " ↦ " + path.from : path.from + " ↦ " + path.to,
 					latLng,
