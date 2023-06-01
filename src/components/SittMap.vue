@@ -77,7 +77,7 @@
 					:lat-lngs="path.latLngs"
 					:name="path.id"
 					:title="path.id"
-					:weight="hoverId === path.id ? 5 : 3"
+					:weight="hoverId === path.id ? 7 : 5"
 					:color="getPathLineColor(path)"
 					@mouseover="onHubMouseOver(path.id)"
 					@mouseout="onHubMouseOut(path.id)"
