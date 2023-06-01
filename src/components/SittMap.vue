@@ -217,6 +217,7 @@ const paths = computed(() =>
 			from: path.from,
 			to: path.to,
 			length_m: path.length_m,
+			type: path.type,
 			latLngs: path.geom.coordinates.map((coord) => [coord[1], coord[0]]), // leaflet lat/lng switch
 			heights: path.geom.coordinates.map((coord) => coord[2]),
 			uids:
@@ -433,7 +434,11 @@ const getPathLineColor = (path) => {
 		return "#f00";
 	}
 
-	return "#3388ff";
+	switch (path.type) {
+		case "river":
+			return "#3388ff";
+	}
+	return "#5e63b6";
 };
 const formatSliderTooltip = (value) => {
 	const v = valueToDayHourMinute(value);

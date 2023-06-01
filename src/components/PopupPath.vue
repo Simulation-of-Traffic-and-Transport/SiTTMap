@@ -1,6 +1,7 @@
 <template>
-	<div class="font-bold mb-2"><FontAwesomeIcon icon="fa-solid fa-road" size="lg" /> {{ path.id }}</div>
+	<div class="font-bold mb-2"><FontAwesomeIcon :icon="dataByType.icon" size="lg" /> {{ path.id }}</div>
 	<div>{{ path.from }} &ndash; {{ path.to }}</div>
+	<div>Type: {{ dataByType.label }}</div>
 	<div>Length: {{ Math.round(path.length_m) }}m</div>
 	<table v-if="path.uids?.length" class="w-full mt-2">
 		<tr class="text-slate-400">
@@ -17,12 +18,27 @@
 </template>
 
 <script setup>
+import { computed } from "vue";
 import DateTime from "@/components/DateTime.vue";
 
-defineProps({
+const props = defineProps({
 	path: {
 		type: Object,
 		required: true,
 	},
+});
+
+const dataByType = computed(() => {
+	switch (props.path.type) {
+		case "river":
+			return {
+				label: "River",
+				icon: "fa-solid fa-water",
+			};
+	}
+	return {
+		label: "Road",
+		icon: "fa-solid fa-road",
+	};
 });
 </script>
