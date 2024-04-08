@@ -13,11 +13,24 @@ import {
 	faMapPin,
 	faPlay,
 	faRoad,
+	faSailboat,
 	faWater,
 	faStop,
 } from "@fortawesome/free-solid-svg-icons";
 
-library.add(faArrowUpFromBracket, faBed, faBan, faCheck, faDolly, faMapPin, faPlay, faRoad, faWater, faStop);
+library.add(
+	faArrowUpFromBracket,
+	faBed,
+	faBan,
+	faCheck,
+	faDolly,
+	faMapPin,
+	faPlay,
+	faRoad,
+	faSailboat,
+	faWater,
+	faStop
+);
 
 import "./assets/styles.css";
 

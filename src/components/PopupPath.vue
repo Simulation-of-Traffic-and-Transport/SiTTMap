@@ -35,6 +35,11 @@ const dataByType = computed(() => {
 				label: "River",
 				icon: "fa-solid fa-water",
 			};
+		case "lake":
+			return {
+				label: "Lake",
+				icon: "fa-solid fa-sailboat",
+			};
 	}
 	return {
 		label: "Road",
