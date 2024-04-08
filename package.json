@@ -9,25 +9,25 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore"
   },
   "dependencies": {
-    "@flatten-js/interval-tree": "^1.0.20",
-    "@fortawesome/fontawesome-svg-core": "^6.4.0",
-    "@fortawesome/free-solid-svg-icons": "^6.4.0",
-    "@fortawesome/vue-fontawesome": "^3.0.3",
-    "@vueform/slider": "^2.1.7",
+    "@flatten-js/interval-tree": "^1.1.3",
+    "@fortawesome/fontawesome-svg-core": "^6.5.2",
+    "@fortawesome/free-solid-svg-icons": "^6.5.2",
+    "@fortawesome/vue-fontawesome": "^3.0.6",
+    "@vueform/slider": "^2.1.10",
     "leaflet": "^1.9.4",
-    "vue": "^3.3.4"
+    "vue": "^3.4.21"
   },
   "devDependencies": {
-    "@rushstack/eslint-patch": "^1.3.0",
-    "@vitejs/plugin-vue": "^4.2.3",
-    "@vue-leaflet/vue-leaflet": "^0.9.0",
-    "@vue/eslint-config-prettier": "^7.1.0",
-    "autoprefixer": "^10.4.14",
-    "eslint": "^8.41.0",
-    "eslint-plugin-vue": "^9.14.1",
-    "postcss": "^8.4.24",
-    "prettier": "^2.8.8",
-    "tailwindcss": "^3.3.2",
-    "vite": "^4.3.9"
+    "@rushstack/eslint-patch": "^1.10.1",
+    "@vitejs/plugin-vue": "^5.0.4",
+    "@vue-leaflet/vue-leaflet": "^0.10.1",
+    "@vue/eslint-config-prettier": "^9.0.0",
+    "autoprefixer": "^10.4.19",
+    "eslint": "^8.57.0",
+    "eslint-plugin-vue": "^9.24.0",
+    "postcss": "^8.4.38",
+    "prettier": "^3.2.5",
+    "tailwindcss": "^3.4.3",
+    "vite": "^5.2.8"
   }
 }
