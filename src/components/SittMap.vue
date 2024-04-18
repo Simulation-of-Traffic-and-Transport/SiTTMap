@@ -38,7 +38,8 @@
 								class="text-green-700"
 							/>
 							<FontAwesomeIcon v-else icon="fa-solid fa-ban" class="text-red-500" />
-							<span class="ml-2">
+							{{ agent.uid }}
+							<span class="ml-1">
 								<DateTime :date-time="{ day: agent.day, time: Math.round(agent.hour * 100) / 100 }" />
 							</span>
 						</button>
