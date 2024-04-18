@@ -38,8 +38,9 @@
 								class="text-green-700"
 							/>
 							<FontAwesomeIcon v-else icon="fa-solid fa-ban" class="text-red-500" />
-							{{ agent.uid }}
-							<span>[day: {{ agent.day }}, hour: {{ Math.round(agent.hour * 100) / 100 }}]</span>
+							<span class="ml-2">
+								<DateTime :date-time="{ day: agent.day, time: Math.round(agent.hour * 100) / 100 }" />
+							</span>
 						</button>
 					</div>
 				</div>
@@ -140,6 +141,7 @@ import PopupHub from "@/components/PopupHub.vue";
 import PopupPositionData from "@/components/PopupPositionData.vue";
 import Slider from "@vueform/slider";
 import IntervalTree from "@flatten-js/interval-tree";
+import DateTime from "@/components/DateTime.vue";
 
 // helper functions
 const valueToDayHourMinute = (value) => ({
