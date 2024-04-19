@@ -95,7 +95,7 @@
 					v-for="hub in hubs"
 					:key="hub.id"
 					:lat-lng="hub.latLng"
-					:radius="zoom > 12 ? zoom * 2 : zoom"
+					:radius="zoom > 12 ? zoom : zoom / 2"
 					:name="hub.id"
 					:title="hub.id"
 					:fill="true"
