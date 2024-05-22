@@ -447,6 +447,12 @@ const sliderPlayingLoop = (timeStamp) => {
 
 	oldTimeStamp = timeStamp;
 
+	// stop at the end
+	if (slider.value >= maxTime.value) {
+		slider.value = maxTime.value;
+		sliderPlaying.value = false;
+	}
+
 	// keep on playing
 	if (sliderPlaying.value) {
 		window.requestAnimationFrame(sliderPlayingLoop);
