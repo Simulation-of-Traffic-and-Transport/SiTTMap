@@ -92,7 +92,7 @@
 
 			<LLayerGroup>
 				<LCircleMarker
-					v-for="hub in hubs"
+					v-for="hub in hubsToShow"
 					:key="hub.id"
 					:lat-lng="hub.latLng"
 					:radius="zoom > 12 ? zoom : zoom / 2"
@@ -236,6 +236,7 @@ const hubs = computed(() =>
 		.filter((hub) => hub?.geom?.coordinates?.length)
 		.map((hub) => ({
 			id: hub.id,
+			type: hub.type,
 			overnight: hub.overnight,
 			latLng: [hub.geom.coordinates[1], hub.geom.coordinates[0]], // leaflet lat/lng switch
 			height: hub.geom.coordinates[2],
@@ -243,6 +244,7 @@ const hubs = computed(() =>
 			agents: agentsPerHub.value[hub.id]?.agents || {},
 		}))
 );
+const hubsToShow = computed(() => hubs.value.filter((hub) => hub?.type !== "river"));
 /**
  * All known agents
  */
@@ -368,29 +370,7 @@ const hoverId = ref(null);
 const selectedAgentUid = ref(null);
 const slider = ref(minTime.value);
 const sliderPlaying = ref(false);
-const timerInterval = ref(null); // reference to timer
 const bounds = ref(null);
-
-// watcher for slider play
-watch(sliderPlaying, () => {
-	if (sliderPlaying.value) {
-		// turned on
-		timerInterval.value = setInterval(() => {
-			if (slider.value >= maxTime.value) {
-				// stop slider at end
-				if (timerInterval.value) clearInterval(timerInterval.value);
-				timerInterval.value = null;
-				sliderPlaying.value = false;
-			}
-			// increase slider value
-			slider.value += 0.01;
-		}, 5);
-	} else {
-		// turned off - delete interval
-		if (timerInterval.value) clearInterval(timerInterval.value);
-		timerInterval.value = null;
-	}
-});
 
 // events
 onBeforeMount(() => {
@@ -440,13 +420,48 @@ const getPathLineColor = (path) => {
 	switch (path.type) {
 		case "river":
 			return "#3388ff";
+		case "lake":
+			return "#00CED1";
 	}
-	return "#5e63b6";
+	return "#2F4F4F";
 };
 const formatSliderTooltip = (value) => {
 	const v = valueToDayHourMinute(value);
 	return "day: " + v.day + ", hour: " + ("" + v.hour).padStart(2, "0") + ":" + ("" + v.minute).padStart(2, "0");
 };
+
+// "Game" loop
+let oldTimeStamp;
+
+const sliderPlayingLoop = (timeStamp) => {
+	console.log(timeStamp);
+
+	// Calculate the number of seconds passed since the last frame
+	if (!oldTimeStamp) {
+		slider.value += 0.01;
+	} else {
+		let tsDiff = timeStamp - oldTimeStamp;
+		// increase slider value
+		slider.value += Math.ceil(tsDiff / 20) / 100;
+	}
+
+	oldTimeStamp = timeStamp;
+
+	// keep on playing
+	if (sliderPlaying.value) {
+		window.requestAnimationFrame(sliderPlayingLoop);
+	}
+};
+
+// watcher for slider play
+watch(sliderPlaying, () => {
+	if (sliderPlaying.value) {
+		window.requestAnimationFrame(sliderPlayingLoop);
+	} else {
+		// reset old time stamp
+		oldTimeStamp = undefined;
+	}
+});
 </script>
 
 <style>
