@@ -19,14 +19,28 @@ const loading = ref(false);
 
 // predefined data?
 if (window.location.search) {
+	// get data from URL query parameter "data"
 	const dataMatches = /data=([^&#=]*)/.exec(window.location.search);
 	const dataLocation = decodeURIComponent(dataMatches[1]);
-	loading.value = true;
-	fetch(dataLocation).then((response) => {
-		response.json().then((data) => {
-			loadedData.value = data;
-			loading.value = false;
-		});
-	});
+	if (dataLocation) {
+		loading.value = true;
+		fetch(dataLocation)
+			.then((response) => {
+				response
+					.json()
+					.then((data) => {
+						loadedData.value = data;
+						loading.value = false;
+					})
+					.catch((error) => {
+						console.error("Error parsing JSON:", error);
+						loading.value = false;
+					});
+			})
+			.catch((error) => {
+				console.error("Error loading data:", error);
+				loading.value = false;
+			});
+	}
 }
 </script>
