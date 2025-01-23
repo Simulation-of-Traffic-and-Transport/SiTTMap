@@ -111,11 +111,12 @@
 			</LLayerGroup>
 
 			<LLayerGroup v-if="agentPositions?.length">
-				<LMarker v-for="positionData in agentPositions" :key="positionData.id" :lat-lng="positionData.latLng">
-					<LPopup :options="{ maxWidth: 600, minWidth: 200 }">
-						<PopupPositionData :data="positionData" />
-					</LPopup>
-				</LMarker>
+				<MarkerIcon
+					v-for="positionData in agentPositions"
+					:key="positionData.id"
+					:data="positionData"
+					:cancelled="hasCancelledAgent(positionData.uids)"
+				/>
 			</LLayerGroup>
 		</LMap>
 	</div>
@@ -126,20 +127,11 @@
  * Show the map
  */
 import L from "leaflet";
-import {
-	LCircleMarker,
-	LControl,
-	LLayerGroup,
-	LMap,
-	LMarker,
-	LPolyline,
-	LPopup,
-	LTileLayer,
-} from "@vue-leaflet/vue-leaflet";
-import { computed, onBeforeMount, ref, watch } from "vue";
+import { LCircleMarker, LControl, LLayerGroup, LMap, LPolyline, LPopup, LTileLayer } from "@vue-leaflet/vue-leaflet";
+import { computed, onBeforeMount, ref, watch, provide } from "vue";
 import PopupPath from "@/components/PopupPath.vue";
 import PopupHub from "@/components/PopupHub.vue";
-import PopupPositionData from "@/components/PopupPositionData.vue";
+import MarkerIcon from "@/components/MarkerIcon.vue";
 import Slider from "@vueform/slider";
 import IntervalTree from "@flatten-js/interval-tree";
 import DateTime from "@/components/DateTime.vue";
@@ -209,6 +201,18 @@ const agentsPerPath = computed(() =>
 const agentsPerHub = computed(() =>
 	Object.fromEntries(props.data.history.filter((entry) => entry.type === "node").map((entry) => [entry.id, entry]))
 );
+/**
+ * Returns set of cancelled agents
+ */
+const cancelledAgents = computed(() => {
+	const cancelledAgents = new Set();
+	for (const agent of props.data.agents_cancelled) {
+		for (const uid of agent.uids) {
+			cancelledAgents.add(uid);
+		}
+	}
+	return cancelledAgents;
+});
 /**
  * Corrected data of paths
  */
@@ -429,6 +433,9 @@ const formatSliderTooltip = (value) => {
 	const v = valueToDayHourMinute(value);
 	return "day: " + v.day + ", hour: " + ("" + v.hour).padStart(2, "0") + ":" + ("" + v.minute).padStart(2, "0");
 };
+const hasCancelledAgent = (uids) => {
+	return uids ? cancelledAgents.value.isSupersetOf(new Set(uids)) : false;
+};
 
 // "Game" loop
 let oldTimeStamp;
@@ -468,6 +475,8 @@ watch(sliderPlaying, () => {
 		oldTimeStamp = undefined;
 	}
 });
+
+provide("cancelledAgents", cancelledAgents.value);
 </script>
 
 <style>

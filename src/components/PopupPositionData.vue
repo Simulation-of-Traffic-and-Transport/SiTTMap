@@ -10,7 +10,7 @@
 				<th class="text-right pl-1">{{ data.type === "node" ? "Departure" : "End" }}</th>
 			</tr>
 			<tr v-for="uid in data.uids" :key="uid">
-				<td class="italic">{{ uid }}</td>
+				<td class="italic" :class="{ 'text-red-500 line-through': cancelledAgents.has(uid) }">{{ uid }}</td>
 				<td class="text-right pl-2"><DateTime :date-time="data.agents[uid].start" /></td>
 				<td class="text-right pl-1"><DateTime :date-time="data.agents[uid].end" /></td>
 			</tr>
@@ -19,6 +19,7 @@
 </template>
 
 <script setup>
+import { inject } from "vue";
 import DateTime from "@/components/DateTime.vue";
 
 defineProps({
@@ -27,4 +28,6 @@ defineProps({
 		required: true,
 	},
 });
+
+const cancelledAgents = inject("cancelledAgents");
 </script>
