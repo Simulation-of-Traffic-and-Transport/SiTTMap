@@ -400,8 +400,8 @@ const onMapReady = (readyMap) => {
 			vectorTileLayerStyles: {
 				water_body: {
 					weight: 1,
-					fillColor: "#00BCD4",
-					fillOpacity: 0.6,
+					fillColor: "#9bc2c4",
+					fillOpacity: 0.5,
 					fill: true,
 				},
 			},
