@@ -127,6 +127,7 @@
  * Show the map
  */
 import L from "leaflet";
+import "leaflet.vectorgrid";
 import { LCircleMarker, LControl, LLayerGroup, LMap, LPolyline, LPopup, LTileLayer } from "@vue-leaflet/vue-leaflet";
 import { computed, onBeforeMount, ref, watch, provide } from "vue";
 import PopupPath from "@/components/PopupPath.vue";
@@ -393,6 +394,19 @@ const onMapReady = (readyMap) => {
 
 	// map to ref variable
 	map.value = readyMap;
+
+	L.vectorGrid
+		.protobuf("/map/water_body/{z}/{x}/{y}", {
+			vectorTileLayerStyles: {
+				water_body: {
+					weight: 1,
+					fillColor: "#00BCD4",
+					fillOpacity: 0.6,
+					fill: true,
+				},
+			},
+		})
+		.addTo(map.value);
 };
 
 const onHubMouseOver = (id) => {
