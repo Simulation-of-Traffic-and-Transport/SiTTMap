@@ -51,8 +51,10 @@ const onFileSelected = async function ($event) {
 			const jsonContent = JSON.parse(fileContents);
 
 			// check the content a bit - does it make sense?
-			if (jsonContent && jsonContent.simulation_start && jsonContent.simulation_end) {
+			if (jsonContent && jsonContent.simulation_starts && jsonContent.simulation_ends) {
 				emit("change", jsonContent); // emit event
+			} else {
+				error.value = "Incorrect file type: Please provide JSON output file";
 			}
 		} catch (e) {
 			error.value = e.message || e;
