@@ -455,8 +455,6 @@ const hasCancelledAgent = (uids) => {
 let oldTimeStamp;
 
 const sliderPlayingLoop = (timeStamp) => {
-	console.log(timeStamp);
-
 	// Calculate the number of seconds passed since the last frame
 	if (!oldTimeStamp) {
 		slider.value += 0.01;
