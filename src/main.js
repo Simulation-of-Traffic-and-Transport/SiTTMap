@@ -16,6 +16,7 @@ import {
 	faSailboat,
 	faWater,
 	faStop,
+	faFlagCheckered,
 } from "@fortawesome/free-solid-svg-icons";
 
 library.add(
@@ -29,9 +30,14 @@ library.add(
 	faRoad,
 	faSailboat,
 	faWater,
-	faStop
+	faStop,
+	faFlagCheckered
 );
 
 import "./assets/styles.css";
+
+// register webawesome components
+import "@awesome.me/webawesome/dist/components/icon/icon";
+import "@awesome.me/webawesome/dist/components/tooltip/tooltip";
 
 createApp(App).component("FontAwesomeIcon", FontAwesomeIcon).mount("#app");

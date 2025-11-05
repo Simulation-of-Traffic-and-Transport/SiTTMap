@@ -3,19 +3,20 @@
 </template>
 
 <script setup>
+import { computed } from "vue";
+
 const props = defineProps({
 	dateTime: {
-		type: Object,
+		type: Number,
 		required: true,
 	},
 });
 
-const day = props.dateTime.day;
-
-const time = (() => {
-	const hours = Math.floor(props.dateTime.time);
-	const minutes = Math.round((props.dateTime.time - hours) * 60);
+const day = computed(() => Math.ceil(props.dateTime / 24));
+const time = computed(() => {
+	const hours = Math.floor(props.dateTime % 24);
+	const minutes = Math.round(((props.dateTime % 24) - hours) * 60);
 
 	return ("" + hours).padStart(2, "0") + ":" + ("" + minutes).padStart(2, "0");
-})();
+});
 </script>
