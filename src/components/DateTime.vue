@@ -1,9 +1,10 @@
 <template>
-	<span class="text-red-600 font-bold">{{ day }}</span> {{ time }}
+	<span class="text-red-600 font-bold" v-if="dt">{{ dt[0] }}</span> {{ dt[1] }}
 </template>
 
 <script setup>
 import { computed } from "vue";
+import { dtTOHuman } from "@/lib/dt_to_human";
 
 const props = defineProps({
 	dateTime: {
@@ -12,11 +13,5 @@ const props = defineProps({
 	},
 });
 
-const day = computed(() => Math.ceil(props.dateTime / 24));
-const time = computed(() => {
-	const hours = Math.floor(props.dateTime % 24);
-	const minutes = Math.round(((props.dateTime % 24) - hours) * 60);
-
-	return ("" + hours).padStart(2, "0") + ":" + ("" + minutes).padStart(2, "0");
-});
+const dt = computed(() => dtTOHuman(props.dateTime));
 </script>

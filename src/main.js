@@ -1,5 +1,6 @@
 import { createApp } from "vue";
 import App from "./App.vue";
+import { vTooltip } from "floating-vue";
 
 // Font Awesome
 import { library } from "@fortawesome/fontawesome-svg-core";
@@ -35,9 +36,8 @@ library.add(
 );
 
 import "./assets/styles.css";
+import "floating-vue/dist/style.css";
 
-// register webawesome components
-import "@awesome.me/webawesome/dist/components/icon/icon";
-import "@awesome.me/webawesome/dist/components/tooltip/tooltip";
-
-createApp(App).component("FontAwesomeIcon", FontAwesomeIcon).mount("#app");
+const app = createApp(App);
+app.directive("tooltip", vTooltip);
+app.component("FontAwesomeIcon", FontAwesomeIcon).mount("#app");
