@@ -59,7 +59,7 @@ const onFileSelected = async function ($event) {
 				jsonContent.end &&
 				jsonContent.simulation_route &&
 				jsonContent.agents &&
-				jsonContent.nodes &&
+				jsonContent.hubs &&
 				jsonContent.paths
 			) {
 				emit("change", jsonContent); // emit event

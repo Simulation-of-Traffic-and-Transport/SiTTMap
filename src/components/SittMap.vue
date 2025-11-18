@@ -22,7 +22,7 @@
 				</div>
 			</LControl>
 			<LControl v-if="selectedAgent" position="topright">
-				<AgentInformation v-model="selectedAgentUid" :agent="selectedAgent" :descendants="descendants" />
+				<AgentInformation v-model="selectedAgentUid" :agent="selectedAgent" :starts="data.from" />
 			</LControl>
 
 			<!-- Slider Element -->
@@ -32,7 +32,7 @@
 						v-model="currentTime"
 						:min="data.start"
 						:max="data.end"
-						:step="0.1"
+						:step="-1"
 						:lazy="false"
 						:format="formatSliderTooltip"
 						class="flex-grow m-1"
@@ -58,7 +58,7 @@
 			</LLayerGroup>
 
 			<!-- Agent Positions -->
-			<AgentPositions :currentTime="currentTime" :timeSlices="data.time_slices" />
+			<AgentPositions :currentTime="currentTime" :hubs="hubs" :paths="paths" />
 		</LMap>
 	</div>
 </template>
@@ -91,8 +91,6 @@ const selectedAgentUid = ref(null);
 const currentTime = ref(props.data.start);
 // refs
 const map = ref();
-
-// computed data
 /**
  * Canonical data of paths
  */
@@ -106,33 +104,38 @@ const paths = computed(() =>
 			length_m: path.length_m,
 			type: path.type,
 			latLngs: path.geom.coordinates.map((coord) => [coord[1], coord[0]]), // leaflet lat/lng switch
+			activity: path.activity,
 		}))
 );
+// const pathMap = computed(() =>
+// 	paths.value.reduce((acc, path) => {
+// 		return { ...acc, [path.id]: path };
+// 	}, {})
+// );
 /**
  * List of all hubs with canonical data
  */
 const hubs = computed(() =>
-	props.data.nodes
+	props.data.hubs
 		.filter((hub) => hub?.lat && hub?.lng)
 		.map((hub) => ({
 			id: hub.id,
-			type: hub.type,
 			overnight: hub.overnight,
 			latLng: L.latLng([hub.lat, hub.lng]), // leaflet lat/lng switch
+			activity: hub.activity,
 		}))
 );
+// const hubMap = computed(() =>
+// 	hubs.value.reduce((acc, hub) => {
+// 		return { ...acc, [hub.id]: hub };
+// 	}, {})
+// );
 // const hubsToShow = computed(() => hubs.value.filter((hub) => hub?.type !== "river"));
 /**
  * Selected agent data
  */
 const selectedAgent = computed(
 	() => (selectedAgentUid?.value && props.data.agents.find((agent) => agent.uid === selectedAgentUid.value)) || null
-);
-/**
- * Selected agent's descendants
- */
-const descendants = computed(
-	() => selectedAgentUid?.value && props.data.agents.filter((agent) => agent.parent === selectedAgentUid.value)
 );
 const formatSliderTooltip = (value) => {
 	const v = dtTOHuman(value);

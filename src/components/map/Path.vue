@@ -11,7 +11,7 @@
 </template>
 
 <script setup>
-import { LCircleMarker, LPolyline } from "@vue-leaflet/vue-leaflet";
+import { LPolyline } from "@vue-leaflet/vue-leaflet";
 import { computed, ref } from "vue";
 
 const props = defineProps({
