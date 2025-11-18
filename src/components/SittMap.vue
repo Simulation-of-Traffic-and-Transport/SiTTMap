@@ -46,7 +46,15 @@
 			</LLayerGroup>
 
 			<!-- Agent Positions -->
-			<AgentPositions :currentTime="currentTime" :hubs="hubs" :paths="paths" />
+			<AgentPositions
+				:currentTime="currentTime"
+				:hubs="hubs"
+				:paths="paths"
+				:start="data.start"
+				:end="data.end"
+				:startHubs="data?.from"
+				:endHubs="data?.to"
+			/>
 		</LMap>
 	</div>
 </template>

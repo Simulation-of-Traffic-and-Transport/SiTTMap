@@ -23,6 +23,22 @@ const props = defineProps({
 		type: Object,
 		required: true,
 	},
+	start: {
+		type: Number,
+		required: true,
+	},
+	end: {
+		type: Number,
+		required: true,
+	},
+	startHubs: {
+		type: Array,
+		required: true,
+	},
+	endHubs: {
+		type: Array,
+		required: true,
+	},
 });
 
 // computed data
@@ -36,8 +52,19 @@ const intervalTree = computed(() => {
 	for (const entry of props.hubs) {
 		if (entry.activity) {
 			for (const activity of entry.activity) {
-				const start = activity.arrival || activity.departure;
-				const end = activity.departure || activity.arrival;
+				let start = activity.arrival || activity.departure;
+				let end = activity.departure || activity.arrival;
+				// start or end hub
+				if (props.startHubs.includes(entry.id)) {
+					start = props.start;
+				}
+				if (props.endHubs.includes(entry.id)) {
+					end = props.end;
+				}
+				// cancelled?
+				// if (entry.is_cancelled) {
+				// 	console.log("Skipping entry", entry);
+				// }
 				const data = {
 					type: "hub",
 					agents: activity.agents,
