@@ -1,6 +1,11 @@
 <template>
 	<LLayerGroup>
-		<AgentMarker v-for="agent in activeAgents" :agent="agent" :currentTime="currentTime" />
+		<AgentMarker
+			v-for="agent in activeAgents"
+			:agent="agent"
+			:currentTime="currentTime"
+			:cancelledAgents="cancelledAgents"
+		/>
 	</LLayerGroup>
 </template>
 
@@ -39,6 +44,10 @@ const props = defineProps({
 		type: Array,
 		required: true,
 	},
+	agents: {
+		type: Object,
+		required: true,
+	},
 });
 
 // computed data
@@ -64,7 +73,7 @@ const intervalTree = computed(() => {
 				// cancelled?
 				// if (entry.is_cancelled) {
 				// 	console.log("Skipping entry", entry);
-				// }
+				// } // TODO
 				const data = {
 					type: "hub",
 					agents: activity.agents,
@@ -108,4 +117,6 @@ const intervalTree = computed(() => {
  * agent positions at current slider setting
  */
 const activeAgents = computed(() => Object.values(intervalTree.value.search([props.currentTime, props.currentTime])));
+
+const cancelledAgents = computed(() => new Set(props.agents.filter((agent) => agent.cancelled)));
 </script>

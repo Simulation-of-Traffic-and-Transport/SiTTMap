@@ -54,6 +54,7 @@
 				:end="data.end"
 				:startHubs="data?.from"
 				:endHubs="data?.to"
+				:agents="data.agents"
 			/>
 		</LMap>
 	</div>

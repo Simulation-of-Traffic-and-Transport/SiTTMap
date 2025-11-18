@@ -1,10 +1,11 @@
 <template>
-	<LMarker :latLng="position"></LMarker>
+	<LMarker :latLng="position" :icon="icon"></LMarker>
 </template>
 
 <script setup>
 import { computed } from "vue";
 import { LMarker } from "@vue-leaflet/vue-leaflet";
+import { stdIcon, cancelledIcon, sleepingIcon } from "@/lib/leaflet_icons";
 
 const props = defineProps({
 	currentTime: {
@@ -14,6 +15,9 @@ const props = defineProps({
 	agent: {
 		type: Object,
 		required: true,
+	},
+	cancelledAgents: {
+		type: Set,
 	},
 });
 
@@ -41,5 +45,18 @@ const position = computed(() => {
 		console.error("Error calculating position for agent", props.agent, error);
 		return { lat: 0, lng: 0 };
 	}
+});
+
+const isCancelled = computed(() => {
+	for (const agent of props.agent.agents) {
+		if (props.cancelledAgents.has(agent)) return true;
+	}
+	return false;
+});
+
+const icon = computed(() => {
+	if (props.agent.rest?.length > 2 && props.agent.rest[2] === "sleep") return sleepingIcon;
+	if (isCancelled.value) return cancelledIcon;
+	return stdIcon;
 });
 </script>
