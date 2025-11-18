@@ -62,6 +62,7 @@
 
 <script setup>
 import L from "leaflet";
+import "leaflet.vectorgrid";
 import { computed, onBeforeMount, ref } from "vue";
 import { LControl, LLayerGroup, LMap, LPolyline } from "@vue-leaflet/vue-leaflet";
 import BaseTileLayer from "@/components/map/BaseTileLayer.vue";
@@ -69,8 +70,6 @@ import SelectAgent from "@/components/map/SelectAgent.vue";
 import AgentInformation from "@/components/map/AgentInformation.vue";
 import Path from "@/components/map/Path.vue";
 import Hub from "@/components/map/Hub.vue";
-import Slider from "@vueform/slider";
-import { dtTOHuman } from "@/lib/dt_to_human";
 import AgentPositions from "@/components/map/AgentPositions.vue";
 import SliderPlayer from "@/components/map/SliderPlayer.vue";
 
@@ -151,6 +150,31 @@ const onMapReady = (readyMap) => {
 
 	// map to ref variable
 	map.value = readyMap;
+
+	L.vectorGrid
+		.protobuf("http://0.0.0.0:3000/water_bodies/{z}/{x}/{y}", {
+			vectorTileLayerStyles: {
+				water_bodies: {
+					weight: 0,
+					fillColor: "#00BCD4",
+					fillOpacity: 0.8,
+					fill: true,
+				},
+			},
+		})
+		.addTo(map.value);
+	L.vectorGrid
+		.protobuf("http://0.0.0.0:3000/mittelmeer/{z}/{x}/{y}", {
+			vectorTileLayerStyles: {
+				mittelmeer: {
+					weight: 0,
+					fillColor: "#00BCD4",
+					fillOpacity: 0.9,
+					fill: true,
+				},
+			},
+		})
+		.addTo(map.value);
 };
 </script>
 
