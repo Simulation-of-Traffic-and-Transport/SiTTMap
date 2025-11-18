@@ -9,11 +9,13 @@
 		:fill-opacity="fillOpacity"
 		@mouseover="onHubMouseOver()"
 		@mouseout="onHubMouseOut()"
-	/>
+	>
+		<LPopup :options="{ maxWidth: 600 }"> {{ hub }} </LPopup>
+	</LCircleMarker>
 </template>
 
 <script setup>
-import { LCircleMarker } from "@vue-leaflet/vue-leaflet";
+import { LCircleMarker, LPopup } from "@vue-leaflet/vue-leaflet";
 import { computed, ref } from "vue";
 
 const props = defineProps({

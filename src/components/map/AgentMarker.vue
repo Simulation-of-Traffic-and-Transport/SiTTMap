@@ -1,10 +1,14 @@
 <template>
-	<LMarker :latLng="position" :icon="icon"></LMarker>
+	<LMarker :latLng="position" :icon="icon">
+		<LPopup :options="{ maxWidth: 600, minWidth: 200 }">
+			{{ agent }}
+		</LPopup>
+	</LMarker>
 </template>
 
 <script setup>
 import { computed } from "vue";
-import { LMarker } from "@vue-leaflet/vue-leaflet";
+import { LMarker, LPopup } from "@vue-leaflet/vue-leaflet";
 import { stdIcon, cancelledIcon, sleepingIcon } from "@/lib/leaflet_icons";
 
 const props = defineProps({

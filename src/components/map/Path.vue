@@ -7,11 +7,13 @@
 		:color="lineColor"
 		@mouseover="onHubMouseOver()"
 		@mouseout="onHubMouseOut()"
-	/>
+	>
+		<LPopup :options="{ maxWidth: 600 }"> {{ path }} </LPopup>
+	</LPolyline>
 </template>
 
 <script setup>
-import { LPolyline } from "@vue-leaflet/vue-leaflet";
+import { LPolyline, LPopup } from "@vue-leaflet/vue-leaflet";
 import { computed, ref } from "vue";
 
 const props = defineProps({
