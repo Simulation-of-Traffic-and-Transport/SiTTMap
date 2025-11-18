@@ -26,19 +26,7 @@
 			</LControl>
 
 			<!-- Slider Element -->
-			<LControl position="bottomleft">
-				<div class="bg-white bg-opacity-80 p-2 ml-10 flex flex-row items-center" style="width: 50vw">
-					<Slider
-						v-model="currentTime"
-						:min="data.start"
-						:max="data.end"
-						:step="-1"
-						:lazy="false"
-						:format="formatSliderTooltip"
-						class="flex-grow m-1"
-					/>
-				</div>
-			</LControl>
+			<SliderPlayer v-model="currentTime" :start="data.start" :end="data.end" />
 
 			<!-- Paths -->
 			<LLayerGroup>
@@ -75,6 +63,7 @@ import Hub from "@/components/map/Hub.vue";
 import Slider from "@vueform/slider";
 import { dtTOHuman } from "@/lib/dt_to_human";
 import AgentPositions from "@/components/map/AgentPositions.vue";
+import SliderPlayer from "@/components/map/SliderPlayer.vue";
 
 // props
 const props = defineProps({
@@ -137,13 +126,6 @@ const hubs = computed(() =>
 const selectedAgent = computed(
 	() => (selectedAgentUid?.value && props.data.agents.find((agent) => agent.uid === selectedAgentUid.value)) || null
 );
-const formatSliderTooltip = (value) => {
-	const v = dtTOHuman(value);
-	return "day: " + v[0] + ", hour: " + v[1];
-};
-
-// "Game" loop
-// TODO
 
 // events
 onBeforeMount(() => {
