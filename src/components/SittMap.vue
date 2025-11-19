@@ -62,6 +62,7 @@
 				:startHubs="data?.from"
 				:endHubs="data?.to"
 				:agents="data.agents"
+				@selectAgent="selectedAgentUid = $event"
 			/>
 		</LMap>
 	</div>

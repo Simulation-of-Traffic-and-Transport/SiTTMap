@@ -5,6 +5,7 @@
 			:agent="agent"
 			:currentTime="currentTime"
 			:cancelledAgents="cancelledAgents"
+			@selectAgent="selectAgent($event)"
 		/>
 	</LLayerGroup>
 </template>
@@ -119,4 +120,11 @@ const intervalTree = computed(() => {
 const activeAgents = computed(() => Object.values(intervalTree.value.search([props.currentTime, props.currentTime])));
 
 const cancelledAgents = computed(() => new Set(props.agents.filter((agent) => agent.cancelled)));
+
+// events
+const emits = defineEmits(["selectAgent"]);
+
+const selectAgent = (agent) => {
+	emits("selectAgent", agent);
+};
 </script>

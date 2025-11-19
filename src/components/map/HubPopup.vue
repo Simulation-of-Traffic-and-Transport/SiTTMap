@@ -1,5 +1,5 @@
 <template>
-	<LPopup :options="{ maxWidth: 600 }">
+	<div>
 		<div class="font-bold mb-2">
 			<FontAwesomeIcon icon="fa-solid fa-map-pin" size="lg" v-tooltip="'Hub'" /> {{ hub.id }}
 		</div>
@@ -14,14 +14,14 @@
 			/>
 			<FontAwesomeIcon
 				v-if="isEnd"
-				icon="fa-solid fa-check"
+				icon="fa-solid fa-flag-checkered"
 				size="lg"
 				class="text-green-700"
 				v-tooltip="'End Hub'"
 			/>
 		</div>
-		<div class="max-h-64 overflow-y-auto">
-			<table v-if="hub.activity?.length" class="w-full mt-2">
+		<div v-if="hub.activity?.length" class="max-h-64 overflow-y-auto">
+			<table class="w-full mt-2">
 				<tbody>
 					<tr class="text-slate-400 border border-gray-300">
 						<th class="p-1">Agents</th>
@@ -48,11 +48,10 @@
 				</tbody>
 			</table>
 		</div>
-	</LPopup>
+	</div>
 </template>
 
 <script setup>
-import { LPopup } from "@vue-leaflet/vue-leaflet";
 import DateTime from "@/components/DateTime.vue";
 
 const props = defineProps({

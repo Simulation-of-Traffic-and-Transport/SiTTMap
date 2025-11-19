@@ -18,6 +18,7 @@ import {
 	faWater,
 	faStop,
 	faFlagCheckered,
+	faHorse,
 } from "@fortawesome/free-solid-svg-icons";
 
 library.add(
@@ -32,7 +33,8 @@ library.add(
 	faSailboat,
 	faWater,
 	faStop,
-	faFlagCheckered
+	faFlagCheckered,
+	faHorse
 );
 
 import "./assets/styles.css";

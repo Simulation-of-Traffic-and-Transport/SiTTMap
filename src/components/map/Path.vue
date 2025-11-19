@@ -8,7 +8,9 @@
 		@mouseover="onHubMouseOver()"
 		@mouseout="onHubMouseOut()"
 	>
-		<PathPopup :path="path" @selectAgent="selectAgent($event)" />
+		<LPopup :options="{ maxWidth: 600 }">
+			<PathPopup :path="path" @selectAgent="selectAgent($event)" />
+		</LPopup>
 	</LPolyline>
 </template>
 

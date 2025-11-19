@@ -10,12 +10,14 @@
 		@mouseover="onHubMouseOver()"
 		@mouseout="onHubMouseOut()"
 	>
-		<HubPopup :hub="hub" :isStart="isStart" :isEnd="isEnd" @selectAgent="selectAgent($event)" />
+		<LPopup :options="{ maxWidth: 600 }">
+			<HubPopup :hub="hub" :isStart="isStart" :isEnd="isEnd" @selectAgent="selectAgent($event)" />
+		</LPopup>
 	</LCircleMarker>
 </template>
 
 <script setup>
-import { LCircleMarker } from "@vue-leaflet/vue-leaflet";
+import { LCircleMarker, LPopup } from "@vue-leaflet/vue-leaflet";
 import { computed, ref } from "vue";
 import HubPopup from "@/components/map/HubPopup.vue";
 

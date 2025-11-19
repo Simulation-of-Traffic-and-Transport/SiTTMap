@@ -1,7 +1,7 @@
 <template>
 	<LMarker :latLng="position" :icon="icon">
 		<LPopup :options="{ maxWidth: 600, minWidth: 200 }">
-			{{ agent }}
+			<AgentPopup :agent="agent" :isCancelled="isCancelled" @selectAgent="selectAgent($event)" />
 		</LPopup>
 	</LMarker>
 </template>
@@ -9,7 +9,8 @@
 <script setup>
 import { computed } from "vue";
 import { LMarker, LPopup } from "@vue-leaflet/vue-leaflet";
-import { stdIcon, cancelledIcon, sleepingIcon } from "@/lib/leaflet_icons";
+import { cancelledIcon, sleepingIcon, stdIcon } from "@/lib/leaflet_icons";
+import AgentPopup from "@/components/map/AgentPopup.vue";
 
 const props = defineProps({
 	currentTime: {
@@ -25,6 +26,7 @@ const props = defineProps({
 	},
 });
 
+// computed properties
 const position = computed(() => {
 	if (props.agent.type === "hub") {
 		return props.agent.data.latLng;
@@ -63,4 +65,11 @@ const icon = computed(() => {
 	if (isCancelled.value) return cancelledIcon;
 	return stdIcon;
 });
+
+// events
+const emits = defineEmits(["selectAgent"]);
+
+const selectAgent = (agent) => {
+	emits("selectAgent", agent);
+};
 </script>

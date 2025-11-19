@@ -1,13 +1,13 @@
 <template>
-	<LPopup :options="{ maxWidth: 600 }">
+	<div>
 		<div class="font-bold mb-2">
 			<FontAwesomeIcon :icon="dataByType.icon" v-tooltip="dataByType.label" :class="dataByType.class" size="lg" />
 			{{ path.id }}
 		</div>
 		<div>{{ path.from }} &ndash; {{ path.to }}</div>
 		<div>Length: {{ Math.round(path.length_m) }}m</div>
-		<div class="max-h-64 overflow-y-auto">
-			<table v-if="path.activity?.length" class="w-full mt-2">
+		<div v-if="path.activity?.length" class="max-h-64 overflow-y-auto">
+			<table class="w-full mt-2">
 				<tbody>
 					<tr class="text-slate-400 border border-gray-300">
 						<th class="p-1">Agents</th>
@@ -36,11 +36,10 @@
 				</tbody>
 			</table>
 		</div>
-	</LPopup>
+	</div>
 </template>
 
 <script setup>
-import { LPopup } from "@vue-leaflet/vue-leaflet";
 import { computed } from "vue";
 import DateTime from "@/components/DateTime.vue";
 
