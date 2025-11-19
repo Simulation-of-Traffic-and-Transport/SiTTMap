@@ -10,13 +10,14 @@
 		@mouseover="onHubMouseOver()"
 		@mouseout="onHubMouseOut()"
 	>
-		<LPopup :options="{ maxWidth: 600 }"> {{ hub }} </LPopup>
+		<HubPopup :hub="hub" :isStart="isStart" :isEnd="isEnd" @selectAgent="selectAgent($event)" />
 	</LCircleMarker>
 </template>
 
 <script setup>
-import { LCircleMarker, LPopup } from "@vue-leaflet/vue-leaflet";
+import { LCircleMarker } from "@vue-leaflet/vue-leaflet";
 import { computed, ref } from "vue";
+import HubPopup from "@/components/map/HubPopup.vue";
 
 const props = defineProps({
 	hub: {
@@ -48,11 +49,17 @@ const fillColor = computed(() =>
 const fillOpacity = computed(() => ((isHover.value || props.isStart || props.isEnd) && 0.7) || 0.2);
 
 // events
+const emits = defineEmits(["selectAgent"]);
+
 const onHubMouseOver = () => {
 	isHover.value = true;
 };
 
 const onHubMouseOut = () => {
 	isHover.value = false;
+};
+
+const selectAgent = (agent) => {
+	emits("selectAgent", agent);
 };
 </script>

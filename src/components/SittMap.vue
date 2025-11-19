@@ -42,6 +42,7 @@
 					:zoom="zoom"
 					:isStart="data?.from.includes(hub.id)"
 					:isEnd="data?.to.includes(hub.id)"
+					@selectAgent="selectedAgentUid = $event"
 				/>
 			</LLayerGroup>
 

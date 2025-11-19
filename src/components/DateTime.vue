@@ -1,5 +1,7 @@
 <template>
-	<span class="text-red-600 font-bold" v-if="dt">{{ dt[0] }}</span> {{ dt[1] }}
+	<span v-if="dt" class="whitespace-nowrap">
+		<span class="text-red-600 font-bold">{{ dt[0] }}</span> {{ dt[1] }}
+	</span>
 </template>
 
 <script setup>
@@ -8,7 +10,7 @@ import { dtTOHuman } from "@/lib/dt_to_human";
 
 const props = defineProps({
 	dateTime: {
-		type: Number,
+		//type: Number | undefined,
 		required: true,
 	},
 });
