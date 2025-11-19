@@ -30,7 +30,13 @@
 
 			<!-- Paths -->
 			<LLayerGroup>
-				<Path v-for="path in paths" :key="path.id" :path="path" :selectedAgent="selectedAgent" />
+				<Path
+					v-for="path in paths"
+					:key="path.id"
+					:path="path"
+					:selectedAgent="selectedAgent"
+					@selectAgent="selectedAgentUid = $event"
+				/>
 			</LLayerGroup>
 
 			<!-- Hubs -->

@@ -8,13 +8,14 @@
 		@mouseover="onHubMouseOver()"
 		@mouseout="onHubMouseOut()"
 	>
-		<LPopup :options="{ maxWidth: 600 }"> {{ path }} </LPopup>
+		<PathPopup :path="path" @selectAgent="selectAgent($event)" />
 	</LPolyline>
 </template>
 
 <script setup>
 import { LPolyline, LPopup } from "@vue-leaflet/vue-leaflet";
 import { computed, ref } from "vue";
+import PathPopup from "@/components/map/PathPopup.vue";
 
 const props = defineProps({
 	path: {
@@ -49,11 +50,17 @@ const lineColor = computed(() => {
 });
 
 // events
+const emits = defineEmits(["selectAgent"]);
+
 const onHubMouseOver = () => {
 	isHover.value = true;
 };
 
 const onHubMouseOut = () => {
 	isHover.value = false;
+};
+
+const selectAgent = (agent) => {
+	emits("selectAgent", agent);
 };
 </script>
