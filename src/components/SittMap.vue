@@ -160,24 +160,12 @@ const onMapReady = (readyMap) => {
 	map.value = readyMap;
 
 	L.vectorGrid
-		.protobuf("http://0.0.0.0:3000/water_bodies/{z}/{x}/{y}", {
+		.protobuf("https://strada.auxc.de/map/all_water_body/{z}/{x}/{y}", {
 			vectorTileLayerStyles: {
-				water_bodies: {
+				all_water_body: {
 					weight: 0,
 					fillColor: "#00BCD4",
 					fillOpacity: 0.8,
-					fill: true,
-				},
-			},
-		})
-		.addTo(map.value);
-	L.vectorGrid
-		.protobuf("http://0.0.0.0:3000/mittelmeer/{z}/{x}/{y}", {
-			vectorTileLayerStyles: {
-				mittelmeer: {
-					weight: 0,
-					fillColor: "#00BCD4",
-					fillOpacity: 0.9,
 					fill: true,
 				},
 			},
