@@ -11,7 +11,7 @@
 			<FontAwesomeIcon
 				v-if="agent.finished"
 				v-tooltip="'Finished'"
-				icon="fa-solid fa-check"
+				icon="fa-solid fa-flag-checkered"
 				class="ml-1 text-green-700"
 				bounce
 			/>

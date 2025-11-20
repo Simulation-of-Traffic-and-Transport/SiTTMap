@@ -11,9 +11,9 @@
 				<tbody>
 					<tr class="text-slate-400 border border-gray-300">
 						<th class="p-1">Agents</th>
-						<th class="text-right p-1 pl-2">Arrival</th>
-						<th class="text-right p-1 pl-2">Departure</th>
-						<th class="text-right p-1 pl-2">Pause?</th>
+						<th class="text-right p-1 pl-2">Start</th>
+						<th class="text-right p-1 pl-2">End</th>
+						<th class="text-right p-1 pl-2">Pauses?</th>
 					</tr>
 					<tr v-for="activity in path.activity" class="border border-gray-300">
 						<td class="align-top p-1">
@@ -30,7 +30,15 @@
 							<DateTime :date-time="activity.legs[activity.legs.length - 1]" />
 						</td>
 						<td class="text-right align-top p-1 pl-2">
-							{{ activity.rest?.length > 2 ? activity.rest[2] : "" }}
+							<table v-if="activity?.rest" class="w-full">
+								<tbody>
+									<tr v-for="rest in activity.rest">
+										<td><DateTime :date-time="rest[0]" :showDay="false" /></td>
+										<td class="px-0.5">{{ rest[1] * 60 }} mins</td>
+										<td class="whitespace-nowrap">{{ rest[2] }}</td>
+									</tr>
+								</tbody>
+							</table>
 						</td>
 					</tr>
 				</tbody>
