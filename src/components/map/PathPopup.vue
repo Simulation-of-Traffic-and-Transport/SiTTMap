@@ -33,8 +33,13 @@
 							<table v-if="activity?.rest" class="w-full">
 								<tbody>
 									<tr v-for="rest in activity.rest">
-										<td><DateTime :date-time="rest[0]" :showDay="false" /></td>
-										<td class="px-0.5">{{ rest[1] * 60 }} mins</td>
+										<td>
+											<DateTimeInterval
+												:from="rest[0]"
+												:to="rest[0] + rest[1]"
+												:showDay="false"
+											/>
+										</td>
 										<td class="whitespace-nowrap">{{ rest[2] }}</td>
 									</tr>
 								</tbody>
@@ -50,6 +55,7 @@
 <script setup>
 import { computed } from "vue";
 import DateTime from "@/components/DateTime.vue";
+import DateTimeInterval from "@/components/DateTimeInterval.vue";
 
 const props = defineProps({
 	path: {

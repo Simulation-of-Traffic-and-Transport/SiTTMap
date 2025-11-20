@@ -1,16 +1,18 @@
 <template>
-	<template v-if="hasDate">
+	<span v-if="hasDate" class="whitespace-nowrap">
 		<template v-if="hasSameDay">
-			<span class="text-red-600 font-bold">{{ fromDate[0] }}</span> {{ fromDate[1] }}&ndash;{{ toDate[1] }}
+			<span v-if="showDay" class="text-red-600 font-bold">{{ fromDate[0] }}</span> {{ fromDate[1] }}&ndash;{{
+				toDate[1]
+			}}
 		</template>
 		<template v-else>
-			<span class="text-red-600 font-bold">{{ fromDate[0] }}</span> {{ fromDate[1] }}&ndash;<span
+			<span v-if="showDay" class="text-red-600 font-bold">{{ fromDate[0] }}</span> {{ fromDate[1] }}&ndash;<span
 				class="text-red-600 font-bold"
 				>{{ toDate[0] }}</span
 			>
 			{{ toDate[1] }}
 		</template>
-	</template>
+	</span>
 </template>
 
 <script setup>
@@ -25,6 +27,10 @@ const props = defineProps({
 	to: {
 		type: Number,
 		required: true,
+	},
+	showDay: {
+		type: Boolean,
+		default: true,
 	},
 });
 
