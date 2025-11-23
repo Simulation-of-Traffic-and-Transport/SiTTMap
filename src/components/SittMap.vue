@@ -64,6 +64,16 @@
 				:agents="data.agents"
 				@selectAgent="selectedAgentUid = $event"
 			/>
+
+			<!-- Furthest position of selected cancelled agent -->
+			<LLayerGroup v-show="selectedAgentFurthestCoordinates">
+				<LMarker
+					v-if="selectedAgentFurthestCoordinates"
+					:latLng="[selectedAgentFurthestCoordinates[1], selectedAgentFurthestCoordinates[0]]"
+					:icon="cancelledIcon2"
+					><LPopup>Furthest coordinate of agent {{ selectedAgentUid }}</LPopup></LMarker
+				>
+			</LLayerGroup>
 		</LMap>
 	</div>
 </template>
@@ -72,7 +82,7 @@
 import L from "leaflet";
 import "leaflet.vectorgrid";
 import { computed, onBeforeMount, ref } from "vue";
-import { LControl, LLayerGroup, LMap, LPolyline } from "@vue-leaflet/vue-leaflet";
+import { LControl, LLayerGroup, LMap, LMarker, LPopup } from "@vue-leaflet/vue-leaflet";
 import BaseTileLayer from "@/components/map/BaseTileLayer.vue";
 import SelectAgent from "@/components/map/SelectAgent.vue";
 import AgentInformation from "@/components/map/AgentInformation.vue";
@@ -80,6 +90,7 @@ import Path from "@/components/map/Path.vue";
 import Hub from "@/components/map/Hub.vue";
 import AgentPositions from "@/components/map/AgentPositions.vue";
 import SliderPlayer from "@/components/map/SliderPlayer.vue";
+import { cancelledIcon2 } from "@/lib/leaflet_icons";
 
 // props
 const props = defineProps({
@@ -142,6 +153,12 @@ const hubs = computed(() =>
 const selectedAgent = computed(
 	() => (selectedAgentUid?.value && props.data.agents.find((agent) => agent.uid === selectedAgentUid.value)) || null
 );
+const selectedAgentFurthestCoordinates = computed(() => {
+	if (selectedAgent.value?.last_coordinate_after_stop?.length > 1) {
+		return selectedAgent.value.last_coordinate_after_stop;
+	}
+	return null;
+});
 
 // events
 onBeforeMount(() => {
