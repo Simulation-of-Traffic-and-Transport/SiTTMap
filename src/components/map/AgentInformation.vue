@@ -23,10 +23,11 @@
 			/>
 		</div>
 		<div class="text-center mb-2">
-			<p class="font-bold">{{ agent.start_hub }}</p>
-			<p>↓</p>
-			<p class="font-bold">{{ agent.end_hub }}</p>
 			<p><DateTimeInterval :from="agent.min_dt" :to="agent.max_dt" /></p>
+			<template v-for="(hub, idx) in agent.hubs">
+				<p class="font-bold">{{ hub }}</p>
+				<p v-if="idx < agent.hubs.length - 1" v-tooltip="agent.edges[idx]">↓</p>
+			</template>
 		</div>
 		<div v-if="agent.parent" class="text-center mb-2">
 			<p class="font-bold">Parent</p>
