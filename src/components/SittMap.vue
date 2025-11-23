@@ -21,8 +21,13 @@
 					<SelectAgent v-model="selectedAgentUid" :agents="data.agents" />
 				</div>
 			</LControl>
-			<LControl v-if="selectedAgent" position="topright">
-				<AgentInformation v-model="selectedAgentUid" :agent="selectedAgent" :starts="data.from" />
+			<LControl v-show="selectedAgent" position="topright">
+				<AgentInformation
+					v-if="selectedAgent"
+					v-model="selectedAgentUid"
+					:agent="selectedAgent"
+					:starts="data.from"
+				/>
 			</LControl>
 
 			<!-- Slider Element -->
